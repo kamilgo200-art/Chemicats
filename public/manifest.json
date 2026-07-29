@@ -1,0 +1,29 @@
+{
+  "name": "Mendelejew Cat",
+  "short_name": "Mendelejew",
+  "description": "Mendelejew Cat - Bullet Hell game about chemistry and cats. Fight evil vegetables using real chemical formulas!",
+  "theme_color": "#0a0a0f",
+  "background_color": "#0a0a0f",
+  "display": "standalone",
+  "orientation": "landscape",
+  "start_url": "/",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/icon-192.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml"
+    },
+    {
+      "src": "/icon-512.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

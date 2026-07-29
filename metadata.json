@@ -1,0 +1,6 @@
+{
+  "name": "Mendelejew Cat",
+  "description": "2D soulslike dungeon bullet hell z kotem strzelającym atomami (H2O).",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

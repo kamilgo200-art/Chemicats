@@ -1,0 +1,37 @@
+@import "tailwindcss";
+
+@theme {
+  --animate-padlock-shake: padlock-shake 1s cubic-bezier(.36,.07,.19,.97) both;
+  --animate-slide-in: slide-in 0.3s ease-out;
+  --animate-wiggle: wiggle 1.5s ease-in-out infinite;
+  --animate-waggle: waggle 2s ease-in-out infinite;
+  --animate-wiggle-reverse: wiggle_reverse 1.5s ease-in-out infinite;
+
+  @keyframes padlock-shake {
+    0%, 100% { transform: rotate(0deg) scale(1); }
+    10%, 30%, 50%, 70%, 90% { transform: rotate(-10deg) scale(1.2); }
+    20%, 40%, 60%, 80% { transform: rotate(10deg) scale(1.2); }
+  }
+  
+  @keyframes slide-in {
+    from { opacity: 0; transform: translateX(-20px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+
+  @keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-10deg); }
+    75% { transform: rotate(10deg); }
+  }
+
+  @keyframes waggle {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(20deg); }
+  }
+
+  @keyframes wiggle_reverse {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(10deg); }
+    75% { transform: rotate(-10deg); }
+  }
+}
