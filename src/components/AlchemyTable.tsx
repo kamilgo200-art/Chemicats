@@ -1,8 +1,11 @@
+import { EN_DICT } from "../i18n";
 import React, { useState, useEffect } from 'react';
 import { PeriodicTable, PERIODIC_TABLE } from './PeriodicTable';
 import { MenuGameplay } from './MenuGameplay';
 
 const BetaDecayTab = ({ engine, setTriggerRender }: { engine: any, setTriggerRender: any }) => {
+    const language = engine?.state?.language || "pl";
+    const tx = (text: string) => language === "en" ? (EN_DICT[text] || text) : text;
     const [decayAmount, setDecayAmount] = useState<number>(() => engine.state.betaDecayVaultNeutrons || 1);
     const [isDecaying, setIsDecaying] = useState(() => (engine.state.betaDecayVaultNeutrons || 0) > 0);
     const [timeElapsedReal, setTimeElapsedReal] = useState(0);
@@ -135,7 +138,7 @@ const BetaDecayTab = ({ engine, setTriggerRender }: { engine: any, setTriggerRen
                      ))}
                      {/* Visual cue for neutrino */}
                      <div className="absolute top-[20%] text-fuchsia-300 font-black tracking-widest text-lg drop-shadow-[0_0_20px_fuchsia] animate-[fadeOutUp_2.5s_ease-out_forwards]">
-                        + {burstYield.e} ν̄ₑ (antyneutrina uciekły!)
+                        + {burstYield.e} ν̄ₑ ({tx("antyneutrina uciekły!")})
                      </div>
                      <style dangerouslySetInnerHTML={{__html:`
                          @keyframes flyOutProton {
@@ -162,7 +165,7 @@ const BetaDecayTab = ({ engine, setTriggerRender }: { engine: any, setTriggerRen
 
             <h3 className="text-xl font-bold text-red-400 mb-2 uppercase tracking-widest">Rozpad Beta Minus (β⁻)</h3>
             <p className="text-sm text-slate-400 text-center mb-6 leading-relaxed bg-slate-800/50 p-4 rounded-xl border border-slate-700/50">
-                Czas rzeczywisty (<span className="text-white font-bold">Offline Progress</span>). Neutron swobodny w naszym modelu standardowym ma czas połowicznego rozpadu na zewnątrz jądra <span className="font-mono text-purple-300 block">T½ = ≈10 min 12 s (612s)</span> Działa w tle!
+                Czas rzeczywisty (<span className="text-white font-bold">{tx("Offline Progress")}</span>{tx("). Neutron swobodny w naszym modelu standardowym ma czas połowicznego rozpadu na zewnątrz jądra")} <span className="font-mono text-purple-300 block">T½ = ≈10 min 12 s (612s)</span> Działa w tle!
             </p>
 
             <div className="flex flex-col md:flex-row gap-8 items-center w-full justify-center">
@@ -257,7 +260,7 @@ const BetaDecayTab = ({ engine, setTriggerRender }: { engine: any, setTriggerRen
                                 return (
                                     <div className="mt-3 pt-3 border-t border-slate-700/50 text-xs text-slate-400 flex flex-col gap-1">
                                         <div className="flex justify-between">
-                                            <span>Całkowity koniec za:</span>
+                                            <span>{tx("Całkowity koniec za:")}</span>
                                             <span className="text-fuchsia-400 font-mono">{formatT(totalTime)}</span>
                                         </div>
                                         <div className="flex justify-between">
@@ -274,7 +277,7 @@ const BetaDecayTab = ({ engine, setTriggerRender }: { engine: any, setTriggerRen
                                             <span className="text-amber-400 font-mono">{formatT(T_HALF)}</span>
                                         </div>
                                         <div className="flex justify-between">
-                                            <span>Czas całk. zniknięcia:</span>
+                                            <span>{tx("Czas całk. zniknięcia:")}</span>
                                             <span className="text-fuchsia-400 font-mono">{formatT(totalTime)}</span>
                                         </div>
                                     </div>
@@ -312,7 +315,7 @@ const BetaDecayTab = ({ engine, setTriggerRender }: { engine: any, setTriggerRen
                             </button>
                         </div>
                     )}
-                    {isDecaying && <p className="text-center text-[10px] text-fuchsia-300/70 font-mono tracking-widest uppercase">Reakcja trwa. Możesz bezpiecznie wyjść z gry.</p>}
+                    {isDecaying && <p className="text-center text-[10px] text-fuchsia-300/70 font-mono tracking-widest uppercase">{tx("Reakcja trwa. Możesz bezpiecznie wyjść z gry.")}</p>}
                 </div>
             </div>
         </div>
@@ -328,6 +331,8 @@ export const AlchemyTable = ({
     onClose: () => void;
     setTriggerRender: any;
 }) => {
+    const language = engine?.state?.language || "pl";
+    const tx = (text: string) => language === "en" ? (EN_DICT[text] || text) : text;
     const [activeTab, setActiveTab] = useState<'transmute' | 'synthesize' | 'base' | 'beta'>('synthesize');
     const [p, setP] = useState(1);
     const [n, setN] = useState(0);
@@ -342,20 +347,20 @@ export const AlchemyTable = ({
     // Sprawdzanie czy podane protony i elektrony pasuja do czegokolwiek
     const checkStable = () => {
         if (p !== e) {
-            setError(`Niestabilny ładunek sztucznego jonu! Zaburzenie elektrostatyczne. Potrzebujesz tylu samo elektronów (${e}) co protonów (${p}).`);
+            setError(`${tx("Niestabilny ładunek sztucznego jonu! Zaburzenie elektrostatyczne. Potrzebujesz tylu samo elektronów (")}${e}${tx(") co protonów (")}${p}${tx(").")}`);
             setDiscovered(null);
             return;
         }
 
         const element = PERIODIC_TABLE.find(el => el.z === p);
         if (!element) {
-            setError('Nieudana synteza jądrowa. Atom rozpadł się na fotony i kwarki.');
+            setError(tx("Nieudana synteza jądrowa. Atom rozpadł się na fotony i kwarki."));
             setDiscovered(null);
             return;
         }
         
         if (element.group === 'unknown') {
-            setError(`Zsyntezowałeś materię! Ale ten pierwiastek jest nieznany nauce: Z=${p}. Znika.`);
+            setError(`${tx("Zsyntezowałeś materię! Ale ten pierwiastek jest nieznany nauce: Z=")}${p}${tx(". Znika.")}`);
             setDiscovered(null);
             return;
         }
@@ -384,7 +389,7 @@ export const AlchemyTable = ({
             title: isStandard 
                 ? `Standardowy ${element.name} (${p + n}${element.symbol})` 
                 : isRadioactive 
-                    ? `Promieniotwórczy izotop ${element.name} (${p + n}${element.symbol}*)` 
+                    ? `${tx("Promieniotwórczy izotop ")}${tx(element.name)} (${p + n}${element.symbol}*)` 
                     : `Stabilny izotop ${element.name} (${p + n}${element.symbol})`
         });
     };
@@ -401,7 +406,7 @@ export const AlchemyTable = ({
         
         const canBuild = engine.state.protons >= p && engine.state.lobbyElectrons >= e && engine.state.neutrons >= n;
         if (!canBuild) {
-            setError(`Brakuje surowców! Potrzebujesz ${p} p⁺, ${e} e⁻ i ${n} n⁰ do stworzenia ${discovered.isotopeSymbol}.`);
+            setError(`${tx("Brakuje surowców! Potrzebujesz ")}${p}${tx(" p⁺, ")}${e}${tx(" e⁻ i ")}${n}${tx(" n⁰ do stworzenia ")}${discovered.isotopeSymbol}.`);
             return;
         }
 
@@ -437,8 +442,8 @@ export const AlchemyTable = ({
             <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-[200] backdrop-blur-md p-4" onClick={onClose}>
                 <div className="bg-slate-900 border border-fuchsia-500/30 shadow-[0_0_50px_rgba(217,70,239,0.2)] rounded-3xl p-8 max-w-lg w-full text-center relative max-h-screen overflow-y-auto" onClick={ev => ev.stopPropagation()}>
                     <button className="absolute top-4 right-4 text-2xl text-slate-400 hover:text-white" onClick={onClose}>&times;</button>
-                    <h2 className="text-3xl font-black text-fuchsia-400 mb-6">⚗️ STÓŁ ALCHEMICZNY</h2>
-                    <p className="text-lg text-slate-300 mb-6">Aby włączyć Stół Alchemiczny potrzebujesz początkowej energii.</p>
+                    <h2 className="text-3xl font-black text-fuchsia-400 mb-6">{tx("⚗️ STÓŁ ALCHEMICZNY")}</h2>
+                    <p className="text-lg text-slate-300 mb-6">{tx("Aby włączyć Stół Alchemiczny potrzebujesz początkowej energii.")}</p>
                     <button 
                         className={`px-8 py-4 rounded-full font-bold text-lg shadow-lg transition-transform ${engine.state.protons >= 10 ? 'bg-fuchsia-600 hover:bg-fuchsia-500 text-white hover:scale-105' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
                         onClick={() => {
@@ -489,10 +494,10 @@ export const AlchemyTable = ({
 
                 {/* Tabs */}
                 <div className="flex flex-wrap w-full mb-4 z-10 bg-slate-800/50 rounded-lg p-1 gap-1">
-                    <button onClick={() => { setActiveTab('synthesize'); setBaseWarning(''); }} className={`flex-1 min-w-[120px] py-1.5 md:py-2 text-xs md:text-sm font-bold rounded-md transition-colors ${activeTab === 'synthesize' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>Synteza Atomów</button>
+                    <button onClick={() => { setActiveTab('synthesize'); setBaseWarning(''); }} className={`flex-1 min-w-[120px] py-1.5 md:py-2 text-xs md:text-sm font-bold rounded-md transition-colors ${activeTab === 'synthesize' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>{tx("Synteza Atomów")}</button>
                     <button onClick={() => { setActiveTab('transmute'); setBaseWarning(''); }} className={`flex-1 min-w-[120px] py-1.5 md:py-2 text-xs md:text-sm font-bold rounded-md transition-colors ${activeTab === 'transmute' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>Transmutacje</button>
                     <button onClick={() => { setActiveTab('beta'); setBaseWarning(''); }} className={`flex-1 min-w-[120px] py-1.5 md:py-2 text-xs md:text-sm font-bold rounded-md transition-colors ${activeTab === 'beta' ? 'bg-red-600 text-white shadow-[0_0_10px_rgba(220,38,38,0.5)]' : 'text-slate-400 hover:bg-slate-700'}`}>Rozpad Beta</button>
-                    <button onClick={() => { setActiveTab('base'); setBaseWarning(''); }} className={`flex-1 min-w-[120px] py-1.5 md:py-2 text-xs md:text-sm font-bold rounded-md transition-colors ${activeTab === 'base' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>Wybór Bazy</button>
+                    <button onClick={() => { setActiveTab('base'); setBaseWarning(''); }} className={`flex-1 min-w-[120px] py-1.5 md:py-2 text-xs md:text-sm font-bold rounded-md transition-colors ${activeTab === 'base' ? 'bg-indigo-600 text-white' : 'text-slate-400 hover:bg-slate-700'}`}>{tx("Wybór Bazy")}</button>
                 </div>
 
                 {/* Content */}
@@ -501,7 +506,7 @@ export const AlchemyTable = ({
                         <div className="flex flex-col md:flex-row gap-4 w-full h-full pb-4">
                             {/* Left side: Canvas */}
                             <div className="w-full md:w-1/2 h-44 md:h-full min-h-[170px] md:min-h-[300px] flex-shrink-0 relative rounded-xl overflow-hidden border border-slate-700 bg-black/50">
-                                <MenuGameplay isAlchemyMode customParticles={{p, n, e}} alchemySynthesizing={isSynthesizing} />
+                                <MenuGameplay isAlchemyMode customParticles={{p, n, e}} alchemySynthesizing={isSynthesizing} language={engine?.state?.language || 'pl'} />
                             </div>
 
                             {/* Right side: Controls */}
@@ -588,13 +593,13 @@ export const AlchemyTable = ({
                                             mass,
                                             isStandard,
                                             isRadioactive,
-                                            label: isStandard ? 'Stabilny' : (isRadioactive ? 'Rozpadający' : 'Izotop')
+                                            label: isStandard ? tx("Stabilny") : (isRadioactive ? tx("Rozpadający") : tx("Izotop"))
                                         });
                                     }
 
                                     return (
                                         <div className="flex flex-col gap-1.5 mb-4 z-10 pointer-events-auto">
-                                            <span className="uppercase text-[9px] font-extrabold text-indigo-300 tracking-wider">Szybki wybór izotopu ({element.name}):</span>
+                                            <span className="uppercase text-[9px] font-extrabold text-indigo-300 tracking-wider">{tx("Szybki wybór izotopu (")}{element.name}):</span>
                                             <div className="grid grid-cols-4 gap-1.5 bg-slate-950/60 p-2 rounded-xl border border-slate-800">
                                                 {isotopes.map(iso => {
                                                     const active = n === iso.nVal;
@@ -658,7 +663,7 @@ export const AlchemyTable = ({
                                                 disabled={disabled}
                                                 className={`w-full py-3 rounded-xl font-black uppercase tracking-widest transition-all duration-300 ${disabled ? 'bg-slate-800 text-slate-500 border border-slate-700 cursor-not-allowed' : 'bg-gradient-to-r from-emerald-500 to-teal-400 text-white shadow-[0_0_20px_rgba(16,185,129,0.5)] hover:scale-105 active:scale-95'}`}
                                             >
-                                                {isSynthesizing ? 'TWORZENIE...' : (owns ? 'Już posiadasz' : (discovered ? (!canAfford ? 'Brak Surowców' : `ZBUDUJ ${discovered.isotopeSymbol}`) : 'Brak Formuły'))}
+                                                {isSynthesizing ? tx("TWORZENIE...") : (owns ? tx("Już posiadasz") : (discovered ? (!canAfford ? tx("Brak Surowców") : `${tx("ZBUDUJ ")}${discovered.isotopeSymbol}`) : tx("Brak Formuły")))}
                                             </button>
                                         );
                                     })()}
@@ -671,7 +676,7 @@ export const AlchemyTable = ({
                         <div className="flex flex-col md:flex-row gap-6 w-full justify-center">
                             <div className="bg-slate-800/80 p-6 rounded-2xl border border-blue-500/30 text-center flex flex-col gap-4 shadow-inner flex-1 max-w-sm">
                                 <h3 className="text-blue-400 font-bold uppercase tracking-widest text-sm">Transmutuj Elektrony</h3>
-                                <p className="text-xs text-slate-400 leading-relaxed mb-2">Rozpad protonu dostarcza gigantycznej energii i masy elektronów (1p = 1836e⁻).</p>
+                                <p className="text-xs text-slate-400 leading-relaxed mb-2">{tx("Rozpad protonu dostarcza gigantycznej energii i masy elektronów (1p = 1836e⁻).")}</p>
                                 <button
                                     className={`py-3 px-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all border ${engine.state.protons >= 1 ? 'bg-blue-600 hover:bg-blue-500 text-white shadow-[0_0_15px_rgba(37,99,235,0.4)] hover:scale-105' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
                                     onClick={() => {
@@ -688,7 +693,7 @@ export const AlchemyTable = ({
                             </div>
                             <div className="bg-slate-800/80 p-6 rounded-2xl border border-amber-500/30 text-center flex flex-col gap-4 shadow-inner flex-1 max-w-sm">
                                 <h3 className="text-amber-400 font-bold uppercase tracking-widest text-sm">Transmutuj Neutrony</h3>
-                                <p className="text-xs text-slate-400 leading-relaxed mb-2">Połączenie p⁺ i e⁻ tworzy ciężki neutron przydatny jako złącznik.</p>
+                                <p className="text-xs text-slate-400 leading-relaxed mb-2">{tx("Połączenie p⁺ i e⁻ tworzy ciężki neutron przydatny jako złącznik.")}</p>
                                 <button
                                     className={`py-3 px-4 rounded-xl font-bold uppercase tracking-widest text-sm transition-all border ${engine.state.protons >= 1 && engine.state.lobbyElectrons >= 3 ? 'bg-amber-600 hover:bg-amber-500 text-white shadow-[0_0_15px_rgba(217,119,6,0.4)] hover:scale-105' : 'bg-slate-700 text-slate-500 cursor-not-allowed'}`}
                                     onClick={() => {
@@ -713,15 +718,15 @@ export const AlchemyTable = ({
 
                     {activeTab === 'base' && (
                         <div className="flex flex-col items-center text-center w-full">
-                            <h3 className="text-xl font-bold text-indigo-300 mb-1">Baza Postaci (Wyposażenie)</h3>
+                            <h3 className="text-xl font-bold text-indigo-300 mb-1">{tx("Baza Postaci (Wyposażenie)")}</h3>
 
                                     <p className="text-xs text-slate-400 mb-4 max-w-2xl mx-auto leading-relaxed mt-4">
-                                        Wybierz odblokowany pierwiastek z listy poniżej, aby przełączać między jego zdobytymi formami lub izotopami. Możesz wyposażyć maksymalnie <span className="text-cyan-400 font-bold">dwa pierwiastki startowe</span> (bronie).
+                                        Wybierz odblokowany pierwiastek z listy poniżej, aby przełączać między jego zdobytymi formami lub izotopami. Możesz wyposażyć maksymalnie <span className="text-cyan-400 font-bold">{tx("dwa pierwiastki startowe")}</span> (bronie).
                                     </p>
 
                                     {/* Currently Equipped Slots */}
                                     <div className="flex gap-4 mb-4 justify-center items-center bg-slate-900/50 p-2.5 rounded-xl border border-slate-800">
-                                        <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">Wybrane pierwiastki (Broń):</span>
+                                        <span className="text-[10px] uppercase font-extrabold text-slate-400 tracking-wider">{tx("Wybrane pierwiastki (Broń):")}</span>
                                         <div className="flex gap-2">
                                             {[0, 1].map(index => {
                                                 const atomStr = engine.state.baseAtoms[index];
@@ -737,7 +742,7 @@ export const AlchemyTable = ({
                                                     return (
                                                         <div key={index} className="w-14 h-14 rounded-xl border-2 border-dashed border-slate-700 bg-black/40 text-[9px] text-slate-500 flex flex-col items-center justify-center font-bold">
                                                             <span>Wolny Slot</span>
-                                                            <span className="scale-[0.8] opacity-50 mt-1">{index === 0 ? 'Lewa ręka' : 'Prawa ręka'}</span>
+                                                            <span className="scale-[0.8] opacity-50 mt-1">{index === 0 ? tx("Lewa ręka") : tx("Prawa ręka")}</span>
                                                         </div>
                                                     );
                                                 }
@@ -752,7 +757,7 @@ export const AlchemyTable = ({
                                                             setTriggerRender((r: number) => r + 1);
                                                         }}
                                                         className="w-14 h-14 rounded-xl border border-fuchsia-500 bg-fuchsia-950/30 text-fuchsia-200 flex flex-col items-center justify-center font-bold group hover:border-red-500 hover:bg-red-950/30 hover:text-red-300 transition-all text-sm cursor-pointer active:scale-95 shadow-[0_0_15px_rgba(217,70,239,0.25)]"
-                                                        title="Kliknij, aby zdjąć"
+                                                        title={tx("Kliknij, aby zdjąć")}
                                                     >
                                                         <span className="text-base font-black leading-none">{formatSuperscriptSymbol(atomStr)}</span>
                                                         <span className="text-[7px] font-bold text-fuchsia-400 group-hover:text-red-400 scale-[0.8] mt-1.5 uppercase leading-none">Zdejmij</span>
@@ -842,7 +847,7 @@ export const AlchemyTable = ({
                                                                             }
                                                                             setBaseWarning('');
                                                                         } else {
-                                                                            setBaseWarning("Osiągnięto limit: możesz wyposażyć maksymalnie 2 pierwiastki startowe! Kliknij na już wybrany pierwiastek, aby go zdjąć.");
+                                                                            setBaseWarning(tx("Osiągnięto limit: możesz wyposażyć maksymalnie 2 pierwiastki startowe! Kliknij na już wybrany pierwiastek, aby go zdjąć."));
                                                                         }
                                                                     }
                                                                     engine.saveGame();
@@ -857,7 +862,7 @@ export const AlchemyTable = ({
                                                                 <span className="text-sm font-black text-white">{formatIsotopic(atomStr)}</span>
                                                                 {isRadioactive && <span className="text-[8px] bg-rose-950 text-rose-300 px-1.5 py-0.5 rounded border border-rose-900 leading-none">☢ PROMIEN.</span>}
                                                                 <span className="text-[8px] font-bold uppercase opacity-75">
-                                                                    {isEquipped ? '● AKTYWNY' : 'WYPOSAŻ'}
+                                                                    {isEquipped ? tx("● AKTYWNY") : tx("WYPOSAŻ")}
                                                                 </span>
                                                             </button>
                                                         );
@@ -936,7 +941,7 @@ export const AlchemyTable = ({
                         <div className="p-4 bg-slate-900/90 border-b border-slate-705/30 flex justify-between items-center flex-shrink-0">
                             <div className="flex flex-col">
                                 <span className="font-extrabold text-xs md:text-sm uppercase tracking-wider text-cyan-400">Wybierz Pierwiastek dla Syntezy</span>
-                                <span className="text-[9px] md:text-[10px] text-slate-400">Wybierz pierwiastek, by auto-uzupełnić protony, neutrons i elektrony</span>
+                                <span className="text-[9px] md:text-[10px] text-slate-400">{tx("Wybierz pierwiastek, by auto-uzupełnić protony, neutrons i elektrony")}</span>
                             </div>
                             <button 
                                 type="button"

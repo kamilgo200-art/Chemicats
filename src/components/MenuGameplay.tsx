@@ -1,7 +1,9 @@
+import { EN_DICT } from "../i18n";
 import React, { useEffect, useRef, useState } from 'react';
 import { PERIODIC_TABLE } from './PeriodicTable';
 
-export const MenuGameplay = ({ selectedZ, customParticles, isAlchemyMode, alchemySynthesizing }: { selectedZ?: number, customParticles?: {p: number, n: number, e: number}, isAlchemyMode?: boolean, alchemySynthesizing?: boolean }) => {
+export const MenuGameplay = ({ selectedZ, customParticles, isAlchemyMode, alchemySynthesizing, language = 'pl' }: { selectedZ?: number, customParticles?: {p: number, n: number, e: number}, isAlchemyMode?: boolean, alchemySynthesizing?: boolean, language?: 'pl' | 'en' }) => {
+    const tx = (text: string) => language === 'en' ? (EN_DICT[text] || text) : text;
     const canvasRef = useRef<HTMLCanvasElement>(null);
     const [particleCount, setParticleCount] = useState({ p: 1, n: 0, e: 1 });
     const lastSelectTime = useRef<number>(0);
@@ -296,7 +298,7 @@ export const MenuGameplay = ({ selectedZ, customParticles, isAlchemyMode, alchem
             ctx.fillText(`Elektrony: ${particleCount.e}`, 10, height - 10);
             
             const elData = PERIODIC_TABLE.find(e => e.z === particleCount.p);
-            const elName = elData ? `${elData.symbol} (${elData.name})` : 'Zostań Architektem Atomów!';
+            const elName = elData ? `${elData.symbol} (${tx(elData.name)})` : tx('Zostań Architektem Atomów!');
             
             ctx.fillStyle = '#a78bfa';
             ctx.font = 'bold 12px sans-serif';
@@ -311,7 +313,7 @@ export const MenuGameplay = ({ selectedZ, customParticles, isAlchemyMode, alchem
     return (
         <div className="relative w-full aspect-video bg-[#0B0F19] rounded-xl overflow-hidden border border-white/5 flex flex-col shadow-[0_0_20px_rgba(167,139,250,0.15)] mt-1">
             <div className="absolute top-2 left-2 z-10 flex gap-2 items-center bg-black/80 px-2 py-1 rounded border border-white/10">
-                <span className="text-[10px] text-white/80 font-bold uppercase tracking-wider">Budowa Atomu</span>
+                <span className="text-[10px] text-white/80 font-bold uppercase tracking-wider">{tx("Budowa Atomu")}</span>
             </div>
             <canvas ref={canvasRef} width={400} height={225} className="w-full h-full object-cover" />
         </div>

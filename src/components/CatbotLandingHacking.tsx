@@ -1,5 +1,8 @@
+import { EN_DICT } from "../i18n";
 import React, { useState, useEffect, useRef } from 'react';
 import { PERIODIC_TABLE } from './PeriodicTable';
+
+const tx = (text: string) => EN_DICT[text] || text;
 
 export function CatbotLandingHacking({ onComplete, onExit }: { onComplete: () => void, onExit: () => void }) {
   const [phase, setPhase] = useState<'landing' | 'hacking' | 'success'>('landing');
@@ -83,12 +86,12 @@ export function CatbotLandingHacking({ onComplete, onExit }: { onComplete: () =>
         </div>
         
         <div className="mt-12 text-center relative z-10 w-full max-w-lg px-8">
-            <h2 className="text-2xl font-bold mb-4 uppercase tracking-[0.2em]">Systemy Lądowania</h2>
+            <h2 className="text-2xl font-bold mb-4 uppercase tracking-[0.2em]">tx("Systemy Lądowania")</h2>
             <div className="bg-[#110000] border border-[#ff003c] p-4 text-left h-32 overflow-y-auto w-full text-xs opacity-90 shadow-[0_0_15px_rgba(255,0,60,0.3)]">
-                <div>{"> "} Inicjalizacja podejścia do Planety RAX...</div>
-                {landingStep >= 1 && <div className="text-orange-400">{"> "} Wejście w atmosferę. Temperatura tarczy rośnie...</div>}
+                <div>{"> "} {tx("Inicjalizacja podejścia do Planety RAX...")}</div>
+                {landingStep >= 1 && <div className="text-orange-400">{"> "} {tx("Wejście w atmosferę. Temperatura tarczy rośnie...")}</div>}
                 {landingStep >= 2 && <div>{"> "} Hamowanie aerodynamiczne. Korekta wektora...</div>}
-                {landingStep >= 3 && <div className="text-white font-bold">{"> "} Przyziemienie udane. Oczekiwanie na manualną autoryzację rdzenia.</div>}
+                {landingStep >= 3 && <div className="text-white font-bold">{"> "} {tx("Przyziemienie udane. Oczekiwanie na manualną autoryzację rdzenia.")}</div>}
             </div>
         </div>
         <button onClick={onExit} className="absolute top-4 right-4 text-white/50 hover:text-[#ff003c] uppercase text-xs transition-colors">Przerwij</button>
@@ -111,7 +114,7 @@ export function CatbotLandingHacking({ onComplete, onExit }: { onComplete: () =>
              
              {hackLevel === 1 && (
                  <div className="animate-fade-in text-center mt-4">
-                    <p className="mb-6 opacity-90 text-sm">Zidentyfikuj podstawowy budulec półprzewodnikowy rdzenia Kombinatu Krzemowo-Cybernetycznego (KOTBOT).</p>
+                    <p className="mb-6 opacity-90 text-sm">{tx("Zidentyfikuj podstawowy budulec półprzewodnikowy rdzenia Kombinatu Krzemowo-Cybernetycznego (KOTBOT).")}</p>
                     <div className="flex flex-wrap justify-center gap-3 mb-8">
                        {['C', 'Si', 'Fe', 'Cu', 'Ge'].map(atom => (
                            <button 
@@ -136,7 +139,7 @@ export function CatbotLandingHacking({ onComplete, onExit }: { onComplete: () =>
 
              {hackLevel === 2 && (
                  <div className="animate-fade-in text-center mt-4">
-                    <p className="mb-6 opacity-90 text-sm">Wprowadź prawidłową liczbę atomową (Z) dla Krzemu (Si) by dostroić rezonans układów.</p>
+                    <p className="mb-6 opacity-90 text-sm">{tx("Wprowadź prawidłową liczbę atomową (Z) dla Krzemu (Si) by dostroić rezonans układów.")}</p>
                     
                     <div className="flex flex-col items-center gap-4 mb-8">
                        <span className="text-5xl text-[#ff2a2a] font-black drop-shadow-[0_0_10px_rgba(255,42,42,0.5)]">{atomicNumberInput}</span>
@@ -148,7 +151,7 @@ export function CatbotLandingHacking({ onComplete, onExit }: { onComplete: () =>
                          onChange={(e) => setAtomicNumberInput(parseInt(e.target.value))}
                          className="w-full max-w-sm accent-[#ff003c]"
                        />
-                       <span className="text-xs text-[#ff003c]/50 uppercase tracking-widest">Wskazówka: Zależy od ułożenia w Układzie Okresowym.</span>
+                       <span className="text-xs text-[#ff003c]/50 uppercase tracking-widest">{tx("Wskazówka: Zależy od ułożenia w Układzie Okresowym.")}</span>
                     </div>
 
                     <button 
@@ -162,7 +165,7 @@ export function CatbotLandingHacking({ onComplete, onExit }: { onComplete: () =>
 
              {hackLevel === 3 && (
                  <div className="animate-fade-in text-center mt-4">
-                    <p className="mb-6 opacity-90 text-sm">Przeskanuj pasma od <span className="text-white font-bold">1 GHz do 10 GHz</span>. Znajdź częstotliwość podprzestrzenną wojskowej cytadeli OLA, by przebić się przez pole asteroid.</p>
+                    <p className="mb-6 opacity-90 text-sm">{tx("Przeskanuj pasma od ")}<span className="text-white font-bold">1 GHz - 10 GHz</span>{tx(". Znajdź częstotliwość podprzestrzenną wojskowej cytadeli OLA, by przebić się przez pole asteroid.")}</p>
                     
                     <div className="flex flex-col items-center gap-4 mb-4">
                        <span className="text-3xl text-[#ff003c] font-black drop-shadow-[0_0_10px_rgba(255,0,60,0.8)]">{frequency.toFixed(2)} GHz</span>
@@ -204,7 +207,7 @@ export function CatbotLandingHacking({ onComplete, onExit }: { onComplete: () =>
                         onClick={handleLevel3Submit}
                         className={`px-8 py-3 uppercase tracking-widest font-bold ${Math.abs(frequency - 3.80) <= 0.05 ? 'bg-white text-black shadow-[0_0_25px_#ffffff]' : 'bg-[#110000] border border-[#ff003c]/50 text-[#ff003c]'} transition-all`}
                     >
-                        {Math.abs(frequency - 3.80) <= 0.05 ? "ZATWIERDŹ SYGNAŁ W OLA" : "Ustal Częstotliwość"}
+                        {Math.abs(frequency - 3.80) <= 0.05 ? tx("ZATWIERDŹ SYGNAŁ W OLA") : tx("Ustal Częstotliwość")}
                     </button>
                  </div>
              )}
@@ -228,7 +231,7 @@ export function CatbotLandingHacking({ onComplete, onExit }: { onComplete: () =>
              )}
            </div>
 
-           <button onClick={onExit} className="mt-8 text-[#ff003c]/50 hover:text-[#ff003c] uppercase text-xs tracking-[0.2em] transition-colors">Zakończ Terminal</button>
+           <button onClick={onExit} className="mt-8 text-[#ff003c]/50 hover:text-[#ff003c] uppercase text-xs tracking-[0.2em] transition-colors">{tx("Zakończ Terminal")}</button>
         </div>
     );
   }

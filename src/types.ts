@@ -3,7 +3,7 @@ export interface Vector2 {
   y: number;
 }
 
-export type AtomType = 'H' | 'He' | 'Li' | 'Be' | 'B' | 'O' | 'C' | 'N' | 'S' | 'Si' | 'Ra' | 'Po' | 'Cl' | 'P' | 'Mg' | 'K' | 'Ca' | 'F' | 'Na' | 'Al' | 'Fe' | 'Ne';
+export type AtomType = 'H' | 'He' | 'Li' | 'Be' | 'B' | 'O' | 'C' | 'N' | 'S' | 'Si' | 'Ra' | 'Po' | 'Cl' | 'P' | 'Mg' | 'K' | 'Ca' | 'F' | 'Na' | 'Al' | 'Fe' | 'Ne' | 'Sc' | 'Ti';
 
 export interface Player {
   pos: Vector2;
@@ -189,7 +189,10 @@ export interface GameState {
   unlockedCharacters: string[];
   characterSelected: boolean;
   showProtonTutorial: boolean;
+  hasSeenTutorial?: boolean;
+  feedbackSubmitted?: boolean;
   dungeonKills: Record<string, number>;
+  revivesUsed: number;
   unpaidTax: number;
   roomsSinceTaxOwed: number;
   policeSpawning: boolean;
@@ -243,6 +246,7 @@ export interface GameState {
   language: 'pl' | 'en';
   autoNextLevel: boolean;
   disableScreenShake: boolean;
+  uiScale: number;
   stats: {
     reactionsCount: Record<string, number>;
     reactionDamage: Record<string, number>;

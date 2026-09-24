@@ -1,0 +1,80 @@
+Ozone Shock
+Siarkowodór
+Dwutlenek Siarki
+Kwas Siarkowy
+Kwas Siarkawy
+Chlorek Litu
+Wodorek Litu
+Tlenek Litu
+Tlenek Berylu
+Chlorek Berylu
+Wodorek Berylu
+Diament
+Grafit
+Stal (Cementyt)
+Rdza (Tlenek Żelaza)
+Piryt (Złoto Głupców)
+Pato-związek (Formaldehyd)
+Kwas Azotowy
+Kwas Węglowy
+Cyjanowodór
+Methane Blast
+Ammonia Freeze
+Woda (Gnicie)
+Acid Cloud
+Toxic Gas
+Krzemionka (Szkło)
+Węglik Krzemu
+Trójchlorek Azotu
+Pentachlorek Fosforu
+Biały Fosfor (Zapalający)
+Fosforowodór
+Kwas Fosforowy
+Chlor (Gaz)
+Kwas Solny
+Tlenek Radu (RaO)
+Wodorek Polonu (PoH₂)
+Krytyczny Rozpad
+Węglik Radu (RaC₂)
+Dwutlenek Polonu (PoO₂)
+Wodorek Radu (RaH₂)
+Boran
+Tlenek Boru
+Chlorek Boru
+Azotek Boru
+Fruktoza
+Celuloza
+Saletra Potasowa
+Węglan Wapnia
+Chlorofil A
+C₂H₅OH (Etanol)
+CH₃COOH (Kwas Octowy)
+Gwałtowne Utlenianie Etanolu
+Chlorek Magnezu
+Chlorek Wapnia
+Tlenek Magnezu
+Tlenek Wapnia (Wapno Palone)
+Wodorotlenek Wapnia
+Chlorek Potasu
+Wodorotlenek Potasu (Kaustyczny)
+Pięciotlenek Fosforu
+Tetrachlorek Krzemu
+NaCl (Chlorek Sodu)
+NaOH (Wodorotlenek Sodu)
+NaHCO₃ (Soda Oczyszczona)
+Al₂O₃ (Korund)
+AlCl₃ (Chlorek Glinu)
+Kwas Fluorowodorowy (HF)
+Kriogeniczny Freon-14
+Fluorek Sodu
+Trójfluorek Glinu (Shrapnel)
+Fluorek Żelaza(III)
+Reakcja Termitowa
+Eksplozja Sodu z Wodą
+Superkwas Neoniowy (NeH⁺)
+Tetrachlorometan
+Diament z Grafitu
+Diament z Ciśnienia
+Detonacja NCl₃
+Zapłon Fosu P₄
+Wybuch Sód-Woda

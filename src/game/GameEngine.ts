@@ -60,13 +60,20 @@ export class GameEngine {
 
       // Special initial atoms
       if (this.state.isLobby) {
-          const defaultBase = char === 'curie_cat' ? ['Ra', 'Po'] : ['H', 'O'];
-          this.state.unlockedAtoms = this.state.baseAtoms.length > 0 ? [...this.state.baseAtoms] : defaultBase;
-          this.state.player.selectedAtom = this.state.unlockedAtoms[0] as AtomType;
-          
           if (char === 'curie_cat') {
+              this.state.unlockedAtoms = ['Ra', 'Po'];
+              this.state.player.selectedAtom = 'Ra' as AtomType;
               if (!this.state.unlockedAlchemyAtoms.includes('Ra')) this.state.unlockedAlchemyAtoms.push('Ra');
               if (!this.state.unlockedAlchemyAtoms.includes('Po')) this.state.unlockedAlchemyAtoms.push('Po');
+          } else if (char === 'mendelejew') {
+              const pool = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'K', 'Ca', 'Sc', 'Ti', 'Fe'];
+              const shuffled = [...pool].sort(() => 0.5 - Math.random());
+              this.state.unlockedAtoms = shuffled.slice(0, 4);
+              this.state.player.selectedAtom = this.state.unlockedAtoms[0] as AtomType;
+          } else {
+              const defaultBase = ['H', 'O'];
+              this.state.unlockedAtoms = this.state.baseAtoms.length > 0 ? [...this.state.baseAtoms] : defaultBase;
+              this.state.player.selectedAtom = this.state.unlockedAtoms[0] as AtomType;
           }
       }
       this.syncReactions();
@@ -76,7 +83,22 @@ export class GameEngine {
       // Reactions are now unlocked dynamically via triggerReaction, so we don't automatically sync them here.
   }
 
+  public saveGlobalSettings() {
+      if (typeof window === 'undefined') return;
+      const settings = {
+          language: this.state.language,
+          difficulty: this.state.difficulty,
+          autoNextLevel: this.state.autoNextLevel,
+          showCombatLog: this.state.showCombatLog,
+          disableScreenShake: this.state.disableScreenShake,
+          uiScale: this.state.uiScale,
+          cameraZoom: this.state.cameraZoom
+      };
+      localStorage.setItem('mendelejew_global_settings', JSON.stringify(settings));
+  }
+
   public saveGame(force: boolean = false) {
+      this.saveGlobalSettings();
     if (this.state.state !== 'playing' && this.state.state !== 'menu') return;
     const now = performance.now();
     if (!force && now - this.lastSaveTime < 1000) return; // limit to 1 save per second
@@ -104,6 +126,7 @@ export class GameEngine {
         savingsBalance: this.state.savingsBalance,
         bondsBalance: this.state.bondsBalance,
         bondsRoomsLeft: this.state.bondsRoomsLeft,
+        feedbackSubmitted: this.state.feedbackSubmitted,
         alchemyUnlocked: this.state.alchemyUnlocked,
         lobbyElectrons: this.state.lobbyElectrons,
         neutrons: this.state.neutrons,
@@ -114,6 +137,8 @@ export class GameEngine {
         protons: this.state.protons,
         unlockedCharacters: this.state.unlockedCharacters,
         showProtonTutorial: this.state.showProtonTutorial,
+        hasSeenTutorial: this.state.hasSeenTutorial,
+        revivesUsed: this.state.revivesUsed,
         maxHpLevel: this.state.maxHpLevel,
         regenLevel: this.state.regenLevel,
         speedLevel: this.state.speedLevel,
@@ -123,10 +148,6 @@ export class GameEngine {
         armorLevel: this.state.armorLevel,
         heatLevel: this.state.heatLevel,
         difficulty: this.state.difficulty,
-        language: this.state.language,
-        autoNextLevel: this.state.autoNextLevel,
-        showCombatLog: this.state.showCombatLog,
-        disableScreenShake: this.state.disableScreenShake,
         stats: this.state.stats,
         charUpgrades: this.state.charUpgrades,
         isLobby: this.state.isLobby,
@@ -247,27 +268,34 @@ export class GameEngine {
     let projectiles: any[] = [];
 
     let level = 1;
-    let unlockedAtoms = ['H', 'O'];
+        let unlockedAtoms = ['H', 'O'];
     if (!loadCurrentSlot && selectedCharacter === 'curie_cat') {
         unlockedAtoms = ['Ra', 'Po'];
+    } else if (!loadCurrentSlot && selectedCharacter === 'mendelejew') {
+        const pool = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'K', 'Ca', 'Sc', 'Ti', 'Fe'];
+        const shuffled = [...pool].sort(() => 0.5 - Math.random());
+        unlockedAtoms = shuffled.slice(0, 4);
     }
     let unlockedReactions: string[] = [];
     let electrons = 0;
     let savingsBalance = 0;
     let bondsBalance = 0;
     let bondsRoomsLeft = 0;
+    let feedbackSubmitted = false;
     let alchemyUnlocked = false;
     let lobbyElectrons = 0;
     let neutrons = 0;
     let betaDecayVaultNeutrons = 0;
     let betaDecayLastTimestamp = 0;
-    let unlockedAlchemyAtoms = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'K', 'Ca', 'Fe'];
+    let unlockedAlchemyAtoms = ['H', 'He', 'Li', 'Be', 'B', 'C', 'N', 'O', 'F', 'Ne', 'Na', 'Mg', 'Al', 'Si', 'P', 'S', 'Cl', 'K', 'Ca', 'Sc', 'Ti', 'Fe'];
     let baseAtoms = ['H', 'O'];
     
-    let charUpgrades: Record<string, any> = {
+        let charUpgrades: Record<string, any> = {
       ginger_cat: { maxHpLevel: 0, regenLevel: 0, speedLevel: 0, gunLevel: 0, armorLevel: 0, heatLevel: 0, hasSuperWeapon: false },
       black_cat: { maxHpLevel: 0, regenLevel: 0, speedLevel: 0, gunLevel: 0, armorLevel: 0, heatLevel: 0, hasSuperWeapon: false },
-      bohr_cat: { maxHpLevel: 0, regenLevel: 0, speedLevel: 0, gunLevel: 0, armorLevel: 0, heatLevel: 0, hasSuperWeapon: false }
+      bohr_cat: { maxHpLevel: 0, regenLevel: 0, speedLevel: 0, gunLevel: 0, armorLevel: 0, heatLevel: 0, hasSuperWeapon: false },
+      curie_cat: { maxHpLevel: 0, regenLevel: 0, speedLevel: 0, gunLevel: 0, armorLevel: 0, heatLevel: 0, hasSuperWeapon: false },
+      mendelejew: { maxHpLevel: 0, regenLevel: 0, speedLevel: 0, gunLevel: 0, armorLevel: 0, heatLevel: 0, hasSuperWeapon: false }
     };
     
     let maxHpLevel = 0;
@@ -280,15 +308,34 @@ export class GameEngine {
     let heatLevel = 0;
     let difficulty: 'kids' | 'easy' | 'normal' | 'hard' = 'normal';
     let language: 'pl' | 'en' = 'pl';
+        let autoNextLevel = true;
+    let disableScreenShake = false;
+    let uiScale = 1.0;
+    let showCombatLog = false;
+    let cameraZoom = typeof window !== 'undefined' && window.innerWidth >= 1024 ? 1.0 : 0.55;
 
-    let stats = { reactionsCount: {}, reactionDamage: {}, totalDamage: 0 };
+    if (typeof window !== 'undefined') {
+        const globalStr = localStorage.getItem('mendelejew_global_settings');
+        if (globalStr) {
+            try {
+                const global = JSON.parse(globalStr);
+                if (global.difficulty) difficulty = global.difficulty;
+                if (global.language) language = global.language;
+                if (global.autoNextLevel !== undefined) autoNextLevel = global.autoNextLevel;
+                if (global.disableScreenShake !== undefined) disableScreenShake = global.disableScreenShake;
+                if (global.uiScale !== undefined) uiScale = global.uiScale;
+                if (global.showCombatLog !== undefined) showCombatLog = global.showCombatLog;
+                if (global.cameraZoom !== undefined) cameraZoom = global.cameraZoom;
+            } catch(e) {}
+        }
+    }
 
+        let stats = { reactionsCount: {}, reactionDamage: {}, totalDamage: 0 };
     let protons = 0;
     let unlockedCharacters = ['ginger_cat'];
     let showProtonTutorial = false;
-    let autoNextLevel = true;
-    let disableScreenShake = false;
-    let showCombatLog = false;
+    let hasSeenTutorial = true;
+    let revivesUsed = 0;
     
     let unpaidTax = 0;
     let roomsSinceTaxOwed = 0;
@@ -354,6 +401,7 @@ export class GameEngine {
                 if (parsed.savingsBalance !== undefined) savingsBalance = parsed.savingsBalance;
                 if (parsed.bondsBalance !== undefined) bondsBalance = parsed.bondsBalance;
                 if (parsed.bondsRoomsLeft !== undefined) bondsRoomsLeft = parsed.bondsRoomsLeft;
+                if (parsed.feedbackSubmitted !== undefined) feedbackSubmitted = parsed.feedbackSubmitted;
                 if (parsed.alchemyUnlocked !== undefined) alchemyUnlocked = parsed.alchemyUnlocked;
                 if (parsed.lobbyElectrons !== undefined) lobbyElectrons = parsed.lobbyElectrons;
                 if (parsed.neutrons !== undefined) neutrons = parsed.neutrons;
@@ -364,6 +412,12 @@ export class GameEngine {
                 if (parsed.protons) protons = parsed.protons;
                 if (parsed.unlockedCharacters) unlockedCharacters = parsed.unlockedCharacters;
                 if (parsed.showProtonTutorial) showProtonTutorial = parsed.showProtonTutorial;
+                if (parsed.hasSeenTutorial !== undefined) {
+                    hasSeenTutorial = parsed.hasSeenTutorial;
+                } else {
+                    hasSeenTutorial = true;
+                }
+                if (parsed.revivesUsed !== undefined) revivesUsed = parsed.revivesUsed;
                 if (parsed.maxHpLevel) maxHpLevel = parsed.maxHpLevel;
                 if (parsed.regenLevel) regenLevel = parsed.regenLevel;
                 if (parsed.speedLevel) speedLevel = parsed.speedLevel;
@@ -374,10 +428,6 @@ export class GameEngine {
                 if (parsed.heatLevel) heatLevel = parsed.heatLevel;
                 if (parsed.stats) stats = parsed.stats;
                 if (parsed.difficulty) difficulty = parsed.difficulty;
-                if (parsed.language) language = parsed.language;
-                if (parsed.autoNextLevel !== undefined) autoNextLevel = parsed.autoNextLevel;
-                if (parsed.showCombatLog !== undefined) showCombatLog = parsed.showCombatLog;
-                if (parsed.disableScreenShake !== undefined) disableScreenShake = parsed.disableScreenShake;
                 
                 if (parsed.charUpgrades) {
                    charUpgrades = parsed.charUpgrades;
@@ -485,7 +535,7 @@ export class GameEngine {
       score: 0,
       state: 'menu',
       camera: { x: 0, y: 0 },
-      cameraZoom: typeof window !== 'undefined' && window.innerWidth >= 1024 ? 1.0 : 0.55,
+      cameraZoom,
       screenShake: 0,
       log: [],
       showCombatLog: showCombatLog,
@@ -512,6 +562,7 @@ export class GameEngine {
       savingsBalance,
       bondsBalance,
       bondsRoomsLeft,
+      feedbackSubmitted,
       showingShop: false,
       showingWorkshop: false,
       showingMercenary: false,
@@ -553,11 +604,13 @@ export class GameEngine {
       language,
       autoNextLevel,
       disableScreenShake,
+      uiScale,
       protons,
       unlockedCharacters,
       characterSelected: characterSelected,
       companion: null,
       showProtonTutorial,
+      revivesUsed,
       dungeonKills: {},
       unpaidTax,
       roomsSinceTaxOwed,
@@ -632,10 +685,16 @@ export class GameEngine {
             }
         }
         
-        this.state.level++;
+                this.state.level++;
         this.state.companion = null;
         
-        const progressionAtoms = ['O', 'H', 'C', 'S', 'Fe', 'Cu', 'Na', 'N', 'P', 'Cl', 'K', 'Mg', 'Ca', 'Si', 'Al', 'Zn', 'Ag', 'Au'];
+        if (this.state.level === 6) {
+             if (!this.state.unlockedCharacters.includes('mendelejew')) {
+                 this.state.unlockedCharacters.push('mendelejew');
+             }
+        }
+        
+        const progressionAtoms = ['O', 'H', 'C', 'S', 'Fe', 'Sc', 'Ti', 'Na', 'N', 'P', 'Cl', 'K', 'Mg', 'Ca', 'Si', 'Al'];
         const nextAtom = progressionAtoms.find(a => !this.state.unlockedAtoms.includes(a));
         if (nextAtom) {
             this.state.unlockedAtoms.push(nextAtom);
@@ -659,6 +718,7 @@ export class GameEngine {
   }
 
   public enterDungeon() {
+      this.state.revivesUsed = 0;
       this.state.isLobby = false;
       this.state.electrons = 0;
       this.state.bondsBalance = 0;
@@ -778,6 +838,7 @@ export class GameEngine {
   }
 
   public forceWipeReset() {
+      this.state.state = 'playing';
       // Actually wipe local save & restart to lobby
       this.state.arrestedDeath = false;
       this.state.isLobby = true;
@@ -852,54 +913,17 @@ export class GameEngine {
           this.addLog("☠️ Cała drużyna zginęła.");
       }
 
-      p.isDead = false;
-      p.deadTimer = 0;
+      p.isDead = true;
+      p.hp = 0;
+      this.state.state = 'gameover';
+  }
+
+  public revivePlayer() {
+      this.state.player.hp = this.state.player.maxHp;
+      this.state.player.isDead = false;
+      this.state.player.iFrameTimer = 3.0;
       this.state.state = 'playing';
-      this.state.isLobby = true;
-      this.state.characterSelected = false;
-      this.state.electrons = 0;
-      this.state.bondsBalance = 0;
-      this.state.bondsRoomsLeft = 0;
-      this.state.savingsBalance = 0;
-      this.state.market.assets.forEach(asset => {
-        asset.shares = 0;
-        let startPrice = 100;
-        if (asset.id === 'crypto_proton') startPrice = 10;
-        else if (asset.id === 'alphabet') startPrice = 50;
-        else if (asset.id === 'tsmc') startPrice = 40;
-        asset.currentPrice = startPrice;
-        asset.history = [startPrice];
-      });
-      this.state.level = 1;
-      this.state.maxHpLevel = 0;
-      this.state.regenLevel = 0;
-      this.state.speedLevel = 0;
-      this.state.gunLevel = 0;
-      this.state.hasSuperWeapon = false;
-      this.state.equippedWeapon = 'normal';
-      this.state.activeShield = 0;
-      this.state.activeStaminaRegen = 0;
-      this.state.pickupRadiusBonus = 0;
-      this.state.potions = { heal: 0, shield: 0, stamina: 0 };
-      this.state.staminaPotionPurchases = 0;
-      this.state.healPotionPurchases = 0;
-      this.state.shieldPotionPurchases = 0;
-      const defaultBaseForP = this.state.selectedCharacter === 'curie_cat' ? ['Ra', 'Po'] : ['H', 'O'];
-      this.state.unlockedAtoms = this.state.baseAtoms.length > 0 ? [...this.state.baseAtoms] : defaultBaseForP;
-      this.state.rooms = [{ gridX: 0, gridY: 0, doors: { North: false, South: false, East: false, West: false }, visited: true, cleared: true, enemyCount: 0, isBoss: false }];
-      p.pos = { x: 0, y: 0 };
-      p.hp = 45; // base logic updates it anyway in lobby
-      p.maxHp = 45;
-      p.speed = 350;
-      p.stamina = p.maxStamina;
-      this.state.enemies = [];
-      this.state.projectiles = [];
-      this.state.drops = [];
-      this.state.unpaidTax = 0;
-      this.state.roomsSinceTaxOwed = 0;
-      this.state.taxEntries = [];
-      this.state.policeSpawning = false;
-      this.saveGame();
+      this.state.revivesUsed++;
   }
 
   public update(dt: number) {
@@ -2081,6 +2105,8 @@ export class GameEngine {
           else if (baseAtom === 'Mg') { speed = 650; radius = 12; damage = 100; newAtoms['Mg'] = 1; fireTime = 0.60; heatCost = 22; }
           else if (baseAtom === 'K') { speed = 700; radius = 15; damage = 120; newAtoms['K'] = 1; fireTime = 0.70; heatCost = 26; }
           else if (baseAtom === 'Ca') { speed = 600; radius = 16; damage = 140; newAtoms['Ca'] = 1; fireTime = 0.8; heatCost = 28; }
+          else if (baseAtom === 'Sc') { speed = 620; radius = 14; damage = 150; newAtoms['Sc'] = 1; fireTime = 0.7; heatCost = 27; }
+          else if (baseAtom === 'Ti') { speed = 650; radius = 15; damage = 170; newAtoms['Ti'] = 1; fireTime = 0.75; heatCost = 29; }
           else if (baseAtom === 'Ra' as any) { speed = 700; radius = 22; damage = 120; newAtoms['Ra'] = 1; fireTime = 0.6; heatCost = 22; if(!this.state.devGodMode) p.hp = Math.max(1, p.hp - radSelfDamage); this.state.screenShake += 3; this.addParticle(p.pos, '#8b5cf6', 60, 6); }
           else if (baseAtom === 'Po' as any) { speed = 900; radius = 15; damage = 200; newAtoms['Po'] = 1; fireTime = 0.8; heatCost = 30; if(!this.state.devGodMode) p.hp = Math.max(1, p.hp - radSelfDamage); this.state.screenShake += 5; this.addParticle(p.pos, '#d946ef', 70, 7); }
           else if (baseAtom === 'H2O' as any) { speed = 700; radius = 12; damage = 0; newAtoms['H'] = 2; newAtoms['O'] = 1; p.stamina -= 12; fireTime = 0.8; heatCost = 34; }
@@ -2183,27 +2209,27 @@ export class GameEngine {
           else { speed = 0; fireTime = 0.2; }
       }
 
-      let gunModifier = 1.0;
-      if (this.state.gunLevel === 1) gunModifier = 0.8;
-      if (this.state.gunLevel === 2) gunModifier = 0.65;
-      if (this.state.gunLevel === 3) gunModifier = 0.5;
-      if (this.state.gunLevel === 4) gunModifier = 0.35;
-      if (this.state.gunLevel === 5) gunModifier = 0.25;
-      if (this.state.gunLevel === 6) gunModifier = 0.15;
-      if (this.state.gunLevel >= 7) gunModifier = 0.08;
+      let gunModifier = 1.15; // Zmniejszona podstawowa szybkość strzelania (wyższy mnożnik)
+      if (this.state.gunLevel === 1) gunModifier = 1.0;
+      if (this.state.gunLevel === 2) gunModifier = 0.85;
+      if (this.state.gunLevel === 3) gunModifier = 0.70;
+      if (this.state.gunLevel === 4) gunModifier = 0.55;
+      if (this.state.gunLevel === 5) gunModifier = 0.40;
+      if (this.state.gunLevel === 6) gunModifier = 0.30;
+      if (this.state.gunLevel >= 7) gunModifier = 0.20;
 
       this.fireTimer = fireTime * gunModifier;
       if (this.state.equippedWeapon === 'shotgun') {
           this.fireTimer *= 2.5; // wolniej przeładowuje
       }
       
-      const heatGainMultiplier = 1 - (this.state.heatLevel * 0.15); // max 1 - 0.45 = 0.55
+      const heatGainMultiplier = 1 - (this.state.heatLevel * 0.1); // max 1 - 0.3 = 0.7 (mniej pomaga, więc szybciej się przegrzewa)
       let finalHeatCost = heatCost * heatGainMultiplier * Math.sqrt(gunModifier); // slower reduction than fire rate
       
       // Ensure at max upgrades it overheats slowly
       const expectedDecayPerSec = 25 * (1 + (this.state.heatLevel * 0.3));
       const fireRatePerSec = 1 / Math.max(0.01, this.fireTimer);
-      const minNetHeatPerSec = 1.5; // ≈ 66 seconds to reach 100
+      const minNetHeatPerSec = 20.0; // Zwiększone przegrzewanie (osiąga 100 bardzo szybko, ok 5s ciągłego ognia max)
       
       if (fireRatePerSec * finalHeatCost <= expectedDecayPerSec) {
           finalHeatCost = (expectedDecayPerSec + minNetHeatPerSec) / fireRatePerSec;
@@ -4042,7 +4068,7 @@ export class GameEngine {
           'ginger_cat': { color: '#fb923c', element: 'C', damageMult: 1.0, fireRate: 0.6, bulletSpeed: 400 },
           'black_cat': { color: '#334155', element: 'H', damageMult: 0.8, fireRate: 0.4, bulletSpeed: 600 },
           'bohr_cat': { color: '#60a5fa', element: 'N', damageMult: 1.2, fireRate: 0.8, bulletSpeed: 300 },
-          'curie_cat': { color: '#a78bfa', element: 'O', damageMult: 1.5, fireRate: 1.0, bulletSpeed: 350 },
+          'curie_cat': { color: '#a78bfa', element: 'Ra', damageMult: 1.5, fireRate: 1.0, bulletSpeed: 350 },
           'schrodinger_cat': { color: '#fcd34d', element: 'S', damageMult: 2.0, fireRate: 1.5, bulletSpeed: 250 }
       };
       

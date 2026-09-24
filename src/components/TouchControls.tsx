@@ -32,23 +32,30 @@ export const TouchControls: React.FC<TouchControlsProps> = ({ engine }) => {
 
     const handleTouchStart = (e: React.TouchEvent) => {
         const halfWidth = window.innerWidth / 2;
+        const bottomZoneThreshold = window.innerHeight * 0.45; // Only bottom 55% of screen triggers joysticks
+
         for (let i = 0; i < e.changedTouches.length; i++) {
             const touch = e.changedTouches[i];
             
-            // Safety check for the drum or menu clicks
+            // Ignore touches in top half to avoid blocking HUD, options, menu and weapon drum
+            if (touch.clientY < bottomZoneThreshold) continue;
+
             const isNearDrum = touch.clientX > window.innerWidth - 130 && touch.clientY > window.innerHeight * 0.15 && touch.clientY < window.innerHeight * 0.60;
             if (isNearDrum) continue;
 
             setLeftStick(prev => {
                 if (touch.clientX < halfWidth && !prev.active) {
-                    return { active: true, id: touch.identifier, start: {x: touch.clientX, y: touch.clientY}, current: {x: touch.clientX, y: touch.clientY} };
+                    // Permanently anchor left joystick to bottom-left corner (never floats to top or middle!)
+                    const anchorX = 85;
+                    const anchorY = window.innerHeight - 85;
+                    return { active: true, id: touch.identifier, start: { x: anchorX, y: anchorY }, current: { x: touch.clientX, y: touch.clientY } };
                 }
                 return prev;
             });
             setRightStick(prev => {
                 if (touch.clientX >= halfWidth && !prev.active) {
                     engine.state.isJoystickShooting = true;
-                    return { active: true, id: touch.identifier, start: {x: touch.clientX, y: touch.clientY}, current: {x: touch.clientX, y: touch.clientY} };
+                    return { active: true, id: touch.identifier, start: { x: touch.clientX, y: touch.clientY }, current: { x: touch.clientX, y: touch.clientY } };
                 }
                 return prev;
             });
@@ -184,68 +191,52 @@ export const TouchControls: React.FC<TouchControlsProps> = ({ engine }) => {
         );
     };
 
+    const isGameplayActive = engine.state.state === 'playing' && engine.state.characterSelected;
+    if (!isGameplayActive) {
+        return null;
+    }
+
     return (
         <div 
             ref={containerRef}
             className={`absolute inset-0 z-40 touch-none flex lg:hidden pointer-events-none`}
         >
-            {/* Split touchscreen input zones so they do not block drum or menu at the upper top half of viewport */}
-            {engine.state.characterSelected && (
-                <>
-                    {/* Left Touchpad Zone for Movement (Bottom 80% left half) */}
-                    <div 
-                        className="absolute left-0 bottom-0 w-[45vw] h-[80vh] pointer-events-auto touch-none bg-transparent"
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                        onTouchCancel={handleTouchEnd}
-                    />
+            {/* Left Touchpad Zone for Movement (Bottom 55% left half only) */}
+            <div 
+                className="absolute left-0 bottom-0 w-[45vw] h-[55vh] pointer-events-auto touch-none bg-transparent"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchEnd}
+            />
 
-                    {/* Right Touchpad Zone for Shooting (Bottom 80% right half) */}
-                    <div 
-                        className="absolute right-0 bottom-0 w-[45vw] h-[80vh] pointer-events-auto touch-none bg-transparent"
-                        onTouchStart={handleTouchStart}
-                        onTouchMove={handleTouchMove}
-                        onTouchEnd={handleTouchEnd}
-                        onTouchCancel={handleTouchEnd}
-                    />
-                </>
-            )}
+            {/* Right Touchpad Zone for Shooting (Bottom 55% right half only) */}
+            <div 
+                className="absolute right-0 bottom-0 w-[45vw] h-[55vh] pointer-events-auto touch-none bg-transparent"
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchEnd}
+            />
 
-            {/* Left Joystick Persistent Visual Guide in Bottom Left Corner */}
-            {engine.state.characterSelected && !leftStick.active && (
+            {/* Left Joystick Stationary Visual in Bottom Left Corner */}
+            {!leftStick.active && (
                 <div 
-                    style={{ position: 'absolute', left: 110, bottom: 110, pointerEvents: 'none', transform: 'translate(-50%, -50%)' }}
-                    className="opacity-30 flex flex-col items-center gap-1.5"
+                    style={{ position: 'absolute', left: 85, bottom: 85, pointerEvents: 'none', transform: 'translate(-50%, -50%)' }}
+                    className="opacity-40 flex flex-col items-center pointer-events-none"
                 >
-                    <div className="w-[110px] h-[110px] rounded-full bg-slate-950/40 border-2 border-dashed border-white/20 flex items-center justify-center shadow-md">
-                        <div className="w-[45px] h-[45px] rounded-full bg-white/5 border border-white/10 flex items-center justify-center">
-                            <span className="text-white text-xs opacity-20">🕹️</span>
+                    <div className="w-[100px] h-[100px] rounded-full bg-slate-900/40 border border-white/20 flex items-center justify-center shadow-lg backdrop-blur-xs">
+                        <div className="w-[42px] h-[42px] rounded-full bg-white/10 border border-white/30 flex items-center justify-center">
+                            <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
                         </div>
                     </div>
-                    <span className="text-[8px] font-black tracking-widest text-slate-400 uppercase">KCIUK IDŹ</span>
                 </div>
             )}
 
-            {engine.state.characterSelected && renderStick(leftStick)}
-            {engine.state.characterSelected && renderStick(rightStick)}
-            
-            {/* Auto-Aim Toggle */}
-            {engine.state.characterSelected && (
-            <div className="absolute top-[65vh] left-4 z-50 pointer-events-auto flex flex-col gap-1 items-center bg-black/20 p-2 rounded-xl backdrop-blur-sm border border-white/5">
-                <span className="text-[8px] text-slate-300 font-bold uppercase tracking-widest">Auto Aim</span>
-                <div 
-                    className={`relative w-[50px] h-[28px] rounded-full border-2 ${engine.state.autoAim ? 'bg-green-900/80 border-green-500/80' : 'bg-slate-900/80 border-slate-600/80'} shadow-[inset_0_4px_10px_rgba(0,0,0,0.6)] cursor-pointer transition-colors duration-300`}
-                    onTouchStart={(e) => { e.stopPropagation(); engine.state.autoAim = !engine.state.autoAim; }}
-                    onMouseDown={(e) => { e.stopPropagation(); engine.state.autoAim = !engine.state.autoAim; }}
-                >
-                    <div className={`absolute top-0.5 left-0.5 w-[20px] h-[20px] rounded-full shadow-md transition-transform duration-300 ${engine.state.autoAim ? 'translate-x-[22px] bg-gradient-to-b from-green-300 to-green-500' : 'translate-x-0 bg-gradient-to-b from-slate-400 to-slate-600'}`} />
-                </div>
-            </div>
-            )}
+            {renderStick(leftStick)}
+            {renderStick(rightStick)}
 
             {/* Dash Button */}
-            {engine.state.characterSelected && (
             <div 
                 className="absolute right-6 bottom-[40vh] md:bottom-[20vh] flex flex-col gap-2 items-center z-50"
             >
@@ -268,7 +259,6 @@ export const TouchControls: React.FC<TouchControlsProps> = ({ engine }) => {
                     <div className="text-white font-bold text-[10px] uppercase opacity-70">Dash</div>
                 </div>
             </div>
-            )}
         </div>
     );
 };

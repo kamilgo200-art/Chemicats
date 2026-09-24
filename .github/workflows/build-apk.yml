@@ -1,0 +1,89 @@
+name: Automatyczny Build APK (CI/CD)
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - 'v*' # Uruchom tworzenie Release po dodaniu tagu np. v1.0.0
+  workflow_dispatch: # Pozwala uruchomić akcję ręcznie z poziomu GitHub Actions
+
+permissions:
+  contents: write # Potrzebne do tworzenia zakładki Release
+
+jobs:
+  build:
+    name: Build & Release Android APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Pobieranie repozytorium (Checkout)
+        uses: actions/checkout@v4
+
+      # -- KROK OPCJONALNY: BUDOWANIE APLIKACJI WEBOWEJ (REACT/VITE) --
+      # Jeśli eksportujesz aplikację z AI Studio i dodajesz Capacitor:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          
+      - name: Instalacja zależności i budowa Vite
+        run: |
+          npm install
+          npm run build
+          
+      # - name: Synchronizacja z systemem Android (Capacitor)
+      #   run: |
+      #     npm install @capacitor/cli @capacitor/android
+      #     npx cap add android || true
+      #     npx cap sync android
+
+      # -- BUDOWANIE APK (GRADLE) --
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17' # Wymagane przez najnowsze wersje Gradle / Android Studio
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Nadanie uprawnień dla pliku gradlew
+        run: |
+          if [ -d "android" ]; then
+            chmod +x android/gradlew
+          elif [ -f "gradlew" ]; then
+            chmod +x gradlew
+          fi
+
+      - name: Kompilacja APK (Assemble Debug)
+        run: |
+          if [ -d "android" ]; then
+            cd android
+            ./gradlew assembleDebug
+          elif [ -f "gradlew" ]; then
+            ./gradlew assembleDebug
+          else
+            echo "❌ Nie znaleziono projektu Android! Upewnij się, że zaimportowałez projekt w Android Studio lub dodałeś Capacitora."
+            exit 1
+          fi
+
+      - name: Zapisz APK jako Artefakt
+        uses: actions/upload-artifact@v4
+        with:
+          name: apka-debug
+          path: |
+            android/app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/debug/*.apk
+
+      - name: Publikacja APK do zakładki Releases
+        uses: softprops/action-gh-release@v2
+        if: startsWith(github.ref, 'refs/tags/')
+        with:
+          files: |
+            android/app/build/outputs/apk/debug/*.apk
+            app/build/outputs/apk/debug/*.apk
+          name: Wydanie ${{ github.ref_name }}
+          draft: false
+          prerelease: false
+          generate_release_notes: true

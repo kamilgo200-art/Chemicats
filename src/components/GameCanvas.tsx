@@ -24,6 +24,8 @@ export const formatMoney = (val: number | string) => {
 // We use a global for the websocket so we can trigger it from anywhere
 let globalWs: WebSocket | null = null;
 
+import { EN_DICT } from '../i18n';
+
 export const GameCanvas = () => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -35,10 +37,11 @@ export const GameCanvas = () => {
   const [logs, setLogs] = useState<string[]>([]);
   const [reactionDiscovery, setReactionDiscovery] = useState<{active: boolean, equation: string, name: string, description: string, atoms?: string[]}|null>(null);
   const [marketDiscovery, setMarketDiscovery] = useState<{active: boolean, title: string, content: string}|null>(null);
+  const [feedbackText, setFeedbackText] = useState("");
   const [bossIntro, setBossIntro] = useState<{active: boolean, name: string, description: string}|null>(null);
   const [showingRecipeBook, setShowingRecipeBook] = useState(false);
   const [showingOptions, setShowingOptions] = useState(false);
-  const [optionsTab, setOptionsTab] = useState<'main' | 'settings' | 'investments' | 'market' | 'periodic_table'>('main');
+  const [optionsTab, setOptionsTab] = useState<'main' | 'settings' | 'investments' | 'market' | 'periodic_table' | 'feedback'>('main');
   const [showingStats, setShowingStats] = useState(false);
   const [showingSaves, setShowingSaves] = useState(false);
   const [showingPeriodicTable, setShowingPeriodicTable] = useState(false);
@@ -75,30 +78,8 @@ export const GameCanvas = () => {
   const [marketExpandedDescs, setMarketExpandedDescs] = useState<Record<string, boolean>>({});
 
   const tx = (text: string) => {
-      const enDict: Record<string, string> = {
-        "WYBIERZ ZAPIS / NOWA GRA": "SELECT SAVE / NEW GAME",
-        "USTAWIENIA": "SETTINGS",
-        "Sterowanie PC:": "PC Controls:",
-        "WASD, Mysz. Spacja/Shift - Dash. Wybór broni/atomu: scroll / 1-9. Z,X,C - Potki. Q - Tryb broni.": "WASD, Mouse. Space/Shift - Dash. Weapon/atom: scroll / 1-9. Z,X,C - Potions. Q - Weapon mode.",
-        "Instrukcje & Reakcje": "Instructions & Reactions",
-        "Możesz grać na telefonie instalując stronę jako aplikację (PWA) przez menu Chrome!": "You can play on mobile by installing the site as an app (PWA) via Chrome menu!",
-        "Poziom Trudności": "Difficulty Level",
-        "Dla Dzieci": "For Kids",
-        "Łatwiejszy": "Easy",
-        "Normalny": "Normal",
-        "Trudny": "Hard",
-        "Język / Language": "Language / Język",
-        "Włączony": "Enabled",
-        "Wyłączony": "Disabled",
-        "Autopomijanie Zwycięstwa": "Auto Skip Victory",
-        "Zapisy Gry": "Save Games",
-        "Sklep": "Shop",
-        "Gameplay": "Gameplay",
-        "TRYB WIELOOSOBOWY": "MULTIPLAYER (CO-OP)",
-        "Budowa Atomu": "Atom Structure"
-      };
       if (engineRef.current?.state?.language === 'en') {
-          return enDict[text] || text;
+          return EN_DICT[text] || text;
       }
       return text;
   };
@@ -136,7 +117,7 @@ export const GameCanvas = () => {
   useEffect(() => {
     let timerId: any;
     if (gameStateUi === 'victory_screen') {
-        if (engineRef.current?.state.autoNextLevel && (engineRef.current?.state.level || 1) <= 6) {
+        if (engineRef.current?.state.autoNextLevel && (engineRef.current?.state.level || 1) < 6) {
             timerId = setInterval(() => {
                 setVictoryTimer(prev => {
                     if (prev <= 1) {
@@ -256,7 +237,7 @@ export const GameCanvas = () => {
       e.preventDefault();
       if (engine && engine.state.state === 'playing') {
           if (engine.state.isLobby && !engine.state.characterSelected) {
-              const chars = ['ginger_cat', 'black_cat', 'bohr_cat', 'curie_cat'];
+              const chars = ['ginger_cat', 'black_cat', 'bohr_cat', 'curie_cat', 'mendelejew'];
               const currentIdx = chars.indexOf(engine.state.selectedCharacter) >= 0 ? chars.indexOf(engine.state.selectedCharacter) : 0;
               let nextIdx = currentIdx;
               if (e.deltaY > 0) nextIdx = (currentIdx + 1) % chars.length;
@@ -679,7 +660,7 @@ export const GameCanvas = () => {
           ctx.fillText('WARSZTAT', 0, 0);
           ctx.font = '600 10px "Inter", sans-serif';
           ctx.fillStyle = '#aaa';
-          ctx.fillText('Podejdź, aby wejść', 0, 20);
+          ctx.fillText(tx(tx("Podejdź, aby wejść")), 0, 20);
           ctx.restore();
 
           // Stół Alchemiczny
@@ -698,7 +679,7 @@ export const GameCanvas = () => {
           ctx.fillText('ALCHEMIA', 0, 0);
           ctx.font = '600 10px "Inter", sans-serif';
           ctx.fillStyle = '#aaa';
-          ctx.fillText('Podejdź, aby wejść', 0, 20);
+          ctx.fillText(tx(tx("Podejdź, aby wejść")), 0, 20);
           ctx.restore();
 
           // Portal
@@ -763,6 +744,17 @@ export const GameCanvas = () => {
               case 'K': return {fill: '#c084fc', stroke: '#a855f7'};
               case 'MG': return {fill: '#fbbf24', stroke: '#f59e0b'};
               case 'CA': return {fill: '#e2e8f0', stroke: '#cbd5e1'};
+              case 'SC': return {fill: '#c4b5fd', stroke: '#a78bfa'};
+              case 'TI': return {fill: '#9ca3af', stroke: '#6b7280'};
+              case 'FE': return {fill: '#b45309', stroke: '#92400e'};
+              case 'AL': return {fill: '#cbd5e1', stroke: '#94a3b8'};
+              case 'NA': return {fill: '#fcd34d', stroke: '#f59e0b'};
+              case 'F': return {fill: '#a7f3d0', stroke: '#34d399'};
+              case 'NE': return {fill: '#fca5a5', stroke: '#f87171'};
+              case 'HE': return {fill: '#fef08a', stroke: '#facc15'};
+              case 'LI': return {fill: '#fecaca', stroke: '#f87171'};
+              case 'BE': return {fill: '#bbf7d0', stroke: '#4ade80'};
+              case 'B': return {fill: '#fed7aa', stroke: '#fb923c'};
               default: return {fill: '#ffffff', stroke: '#ffffff'};
           }
       };
@@ -892,7 +884,7 @@ export const GameCanvas = () => {
           ctx.textAlign = 'center';
           ctx.fillText('🐾 Najemnicy', 0, -10);
           ctx.font = '14px Arial';
-          ctx.fillText('(Kliknij w środku aby wejść)', 0, 15);
+          ctx.fillText(tx(tx("(Kliknij w środku aby wejść)")), 0, 15);
           ctx.restore();
       }
 
@@ -1128,7 +1120,7 @@ export const GameCanvas = () => {
              ctx.textAlign = 'center';
              ctx.textBaseline = 'middle';
              ctx.fillText('PATO', 0, -10);
-             ctx.fillText('ZWIĄZEK', 0, 20);
+             ctx.fillText(tx(tx("ZWIĄZEK")), 0, 20);
         } else if (e.type === 'Root') {
              ctx.fillStyle = '#78350f'; 
              ctx.beginPath();
@@ -1777,6 +1769,27 @@ export const GameCanvas = () => {
               ctx.lineTo(i + (Math.random()*2-1), -19);
               ctx.stroke();
           }
+      } else if (char === 'mendelejew') {
+          ctx.save();
+          ctx.beginPath();
+          ctx.fillStyle = '#94a3b8';
+          ctx.arc(0, -6, 11, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.beginPath(); ctx.moveTo(-8, -12); ctx.lineTo(-12, -20); ctx.lineTo(-3, -15); ctx.fill();
+          ctx.beginPath(); ctx.moveTo(8, -12); ctx.lineTo(12, -20); ctx.lineTo(3, -15); ctx.fill();
+          ctx.fillStyle = '#ffffff';
+          ctx.beginPath(); ctx.arc(0, 2, 9, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(-5, 0, 7, 0, Math.PI * 2); ctx.fill();
+          ctx.beginPath(); ctx.arc(5, 0, 7, 0, Math.PI * 2); ctx.fill();
+          ctx.fillStyle = '#000000';
+          ctx.beginPath(); ctx.arc(-4, -7, 1.5, 0, Math.PI*2); ctx.fill();
+          ctx.beginPath(); ctx.arc(4, -7, 1.5, 0, Math.PI*2); ctx.fill();
+          ctx.strokeStyle = '#000000';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(-4, -7, 3, 0, Math.PI*2); ctx.stroke();
+          ctx.beginPath(); ctx.arc(4, -7, 3, 0, Math.PI*2); ctx.stroke();
+          ctx.beginPath(); ctx.moveTo(-1, -7); ctx.lineTo(1, -7); ctx.stroke();
+          ctx.restore();
       } else {
           // KINUS MIAULING GINGER SCIENTIST CAT
           ctx.font = '30px Arial';
@@ -2322,6 +2335,8 @@ export const GameCanvas = () => {
       <div className="absolute bottom-0 right-0 w-64 h-64 bg-blue-500/10 blur-[120px] pointer-events-none"></div>
 
       <canvas ref={canvasRef} className="block relative w-full h-full cursor-crosshair z-0" />
+      <div style={{ transform: `scale(${engineRef.current?.state.uiScale || 1.0})`, transformOrigin: 'top left', position: 'absolute', top: 0, left: 0, width: `${100 / (engineRef.current?.state.uiScale || 1.0)}%`, height: `${100 / (engineRef.current?.state.uiScale || 1.0)}%`, pointerEvents: 'none' }}>
+        <div style={{ pointerEvents: 'none', width: '100%', height: '100%', position: 'relative' }}>
 
       {/* POLICE CAR RAID - AMBIENT SIREN VIGNETTE OVERLAY (troszeczke wolniej/bardziej widoczne) */}
       {engineRef.current?.state?.policeSpawning && (
@@ -2353,7 +2368,7 @@ export const GameCanvas = () => {
                   }}
                   className="bg-indigo-600/90 hover:bg-indigo-500 backdrop-blur-md border-2 border-indigo-300 rounded-full px-6 py-3 text-white font-black tracking-widest shadow-[0_0_20px_rgba(99,102,241,0.6)] animate-pulse hover:animate-none transition-all cursor-pointer"
               >
-                  🌀 {engineRef.current.state.nearPortalIsLobby ? "ENTER DUNGEON (E)" : "PRZEJDŹ NA NIŻSZE PIĘTRO (E)"}
+                  🌀 {engineRef.current.state.nearPortalIsLobby ? "ENTER DUNGEON (E)" : tx("PRZEJDŹ NA NIŻSZE PIĘTRO (E)")}
               </button>
           </div>
       )}
@@ -2364,9 +2379,9 @@ export const GameCanvas = () => {
          const totalBossHp = activeBosses.reduce((sum, b) => sum + b.hp, 0);
          const totalBossMaxHp = activeBosses.reduce((sum, b) => sum + b.maxHp, 0);
          const isBossPresent = totalBossHp > 0;
-         
          return (
          <>
+
           {isBossPresent && (
              <div className="absolute top-1 md:top-2 left-1/2 -translate-x-1/2 z-40 w-[95%] max-w-[450px] pointer-events-none transition-all duration-1000 ease-out animate-in slide-in-from-top-10 fade-in">
                  <div className="bg-slate-900/80 backdrop-blur-md rounded-xl border border-red-500/30 p-2 md:p-3 shadow-[0_0_30px_rgba(220,38,38,0.3)] flex flex-col gap-1 md:gap-2">
@@ -2375,13 +2390,13 @@ export const GameCanvas = () => {
                              {activeBosses.length === 1 ? (
                                  {
                                      'Celery': 'Sal su moner',
-                                     'SnakeGourdHead': 'Tykwa węzowa z 4 oczami',
+                                     'SnakeGourdHead': tx("Tykwa węzowa z 4 oczami"),
                                      'Hogweed': 'Barszcz Sosnowskiego',
                                      'Durian': 'Radioaktywny Durian',
-                                     'GiantTree': 'Pradawny Dąb',
+                                     'GiantTree': tx("Pradawny Dąb"),
                                      'MutantPolimer': 'Zmutowany Polimer'
                                  }[activeBosses[0].type as string] || activeBosses[0].type
-                             ) : "WIELOKROTNE ZAGROŻENIE"}
+                             ) : tx("WIELOKROTNE ZAGROŻENIE")}
                          </h2>
                          {/* Spacer for the absolute positioned title */}
                          <div className="h-4 md:h-6 w-full"></div>
@@ -2411,8 +2426,8 @@ export const GameCanvas = () => {
                  <div className="flex items-center gap-2">
                      <span className="text-xl">🐱</span>
                      <div>
-                         <div className="text-[10px] font-black uppercase tracking-widest text-indigo-300 leading-none">Poziom {engineRef.current.state.level}</div>
-                         <div className="text-[11px] font-bold tracking-tight text-white/90 leading-none mt-1">Pokój {engineRef.current.state.currentRoom.x}, {engineRef.current.state.currentRoom.y}</div>
+                         <div className="text-[10px] font-black uppercase tracking-widest text-indigo-300 leading-none">{tx("Poziom ")}{engineRef.current.state.level}</div>
+                         <div className="text-[11px] font-bold tracking-tight text-white/90 leading-none mt-1">{tx("")}{engineRef.current.state.currentRoom.x}, {engineRef.current.state.currentRoom.y}</div>
                      </div>
                  </div>
                  
@@ -2438,7 +2453,7 @@ export const GameCanvas = () => {
                  {/* HP Bar */}
                  <div className="flex flex-col gap-0.5">
                      <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-400 leading-none">
-                         <span>Punkty Życia (HP)</span>
+                         <span>{tx("")}</span>
                          <span className="text-white font-extrabold">{Math.floor(engineRef.current.state.player.hp)} / {engineRef.current.state.player.maxHp}</span>
                      </div>
                      <div className="w-full h-2 bg-slate-900/80 rounded-full overflow-hidden border border-white/5 relative shadow-inner">
@@ -2449,7 +2464,7 @@ export const GameCanvas = () => {
                  {/* Stamina Bar */}
                  <div className="flex flex-col gap-0.5">
                      <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-400 leading-none">
-                         <span>Energia (Stamina)</span>
+                         <span>{tx("Energia (Stamina)")}</span>
                          <span className="text-yellow-400 font-extrabold">{Math.floor(engineRef.current.state.player.stamina)}%</span>
                      </div>
                      <div className="w-full h-2 bg-slate-900/80 rounded-full overflow-hidden border border-white/5 relative shadow-inner">
@@ -2460,7 +2475,7 @@ export const GameCanvas = () => {
                  {/* Heat Bar */}
                  <div className="flex flex-col gap-0.5">
                      <div className="flex justify-between items-center text-[8px] font-black uppercase text-slate-400 leading-none">
-                         <span>Przegrzanie Lufy</span>
+                         <span>{tx("Przegrzanie Lufy")}</span>
                          <span className={`${engineRef.current.state.overheated ? 'text-red-500 animate-pulse' : 'text-orange-400'} font-extrabold`}>{Math.floor(engineRef.current.state.heat)}%</span>
                      </div>
                      <div className="w-full h-2 bg-slate-900/80 rounded-full overflow-hidden border border-white/5 relative shadow-inner">
@@ -2474,7 +2489,7 @@ export const GameCanvas = () => {
          {engineRef.current.state.showCombatLog && (
              <div className="absolute top-[138px] left-2 lg:top-[168px] lg:left-4 z-50 pointer-events-none scale-75 lg:scale-90 origin-top-left w-64 lg:w-72 flex flex-col gap-1 font-sans">
                  <div className="bg-slate-950/45 backdrop-blur-md border border-white/5 rounded-xl p-2 md:p-2.5 flex flex-col gap-0.5 text-[8px] lg:text-[10px] text-indigo-300 leading-tight">
-                    <h4 className="text-[7px] uppercase font-black text-indigo-400/80 tracking-widest border-b border-white/5 pb-1 mb-1">Kombat Log:</h4>
+                    <h4 className="text-[7px] uppercase font-black text-indigo-400/80 tracking-widest border-b border-white/5 pb-1 mb-1">{tx("Kombat Log:")}</h4>
                     {logs.slice(-3).map((l, i) => <div key={i} className="animate-pulse truncate">⚡ {l}</div>)}
                  </div>
              </div>
@@ -2499,9 +2514,9 @@ export const GameCanvas = () => {
                            engineRef.current.state.policeSpawning = false;
                            // Remove police
                            engineRef.current.state.enemies = engineRef.current.state.enemies.filter(e => e.type !== 'PoliceCat');
-                           engineRef.current.addLog("💸 Wpłacono 'darowiznę' dla Policji. (5000 e⁻)");
+                           engineRef.current.addLog(tx("💸 Wpłacono 'darowiznę' dla Policji. (5000 e⁻)"));
                        } else if (engineRef.current) {
-                           engineRef.current.addLog("❌ Masz za mało elektronów na łapówkę! (Wymagane 5000 e⁻)");
+                           engineRef.current.addLog(tx("❌ Masz za mało elektronów na łapówkę! (Wymagane 5000 e⁻)"));
                        }
                    }}
                    className="bg-red-950/80 backdrop-blur-xl border border-red-500/50 rounded-full px-3.5 py-2 font-black tracking-widest text-[9px] lg:text-[10px] text-red-200 hover:bg-red-900 flex items-center justify-center gap-1.5 shadow-[0_0_20px_rgba(239,68,68,0.6)] transition-all cursor-pointer outline-none animate-bounce"
@@ -2512,220 +2527,213 @@ export const GameCanvas = () => {
          </div>
 
          {/* Revolver Magazine */}
-         {engineRef.current.state.isLobby && !engineRef.current.state.characterSelected ? (
-             <div className="absolute inset-0 flex items-center justify-center z-30 pointer-events-none">
-                 <div className="absolute top-20 text-center pointer-events-auto w-full px-4">
-                     <h2 className="text-3xl md:text-4xl font-black text-white tracking-widest uppercase shadow-black drop-shadow-[0_0_20px_rgba(255,255,255,0.5)]">Wybierz Kota</h2>
-                     <p className="text-slate-400 font-bold mt-2 text-xs md:text-sm">Scrolluj lub przesuń palcem po bębenku, Kliknij w bębenek by wybrać</p>
-                 </div>
-                 
-                 <div className="relative w-56 h-56 md:w-64 md:h-64 z-40 pointer-events-none mt-10 flex items-center justify-center">
-                     {(() => {
-                         const st = engineRef.current!.state;
-                         // Black cat is not automatically unlocked anymore
-                         const items = ['ginger_cat', 'black_cat', 'bohr_cat', 'curie_cat'];
-                         
-                         const selItem = st.selectedCharacter;
-                         let selIndex = items.indexOf(selItem);
-                         if (selIndex === -1) selIndex = 0;
-                         
-                         const rotDeg = -(selIndex) * (360 / items.length);
+          {engineRef.current.state.isLobby && !engineRef.current.state.characterSelected ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center z-50 pointer-events-auto bg-[#060814]/90 backdrop-blur-xl p-3 sm:p-6 overflow-y-auto">
+                  {(() => {
+                      const st = engineRef.current!.state;
+                      const isMulti = localStorage.getItem("lanActive") === "true";
+                      
+                      const catCharacters = [
+                          {
+                              id: 'ginger_cat',
+                              name: tx('Kinus Miauling'),
+                              weapon: 'Pistolet chemiczny',
+                              cost: 0,
+                              icon: '🐱',
+                              badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+                              bgGradient: 'from-amber-950/40 to-slate-900/80',
+                              borderColor: 'border-amber-500',
+                              desc: tx('Klasyczny pistolet jednowiązkowy. Zbalansowany i uniwersalny kot laboratoryjny.'),
+                              locked: false
+                          },
+                          {
+                              id: 'black_cat',
+                              name: tx('Amedeo Avo-Gatto'),
+                              weapon: 'Strzelba (Shotgun 3x)',
+                              cost: 1,
+                              icon: '🐈‍⬛',
+                              badgeColor: 'bg-indigo-500/20 text-indigo-300 border-indigo-500/40',
+                              bgGradient: 'from-slate-900 to-indigo-950/60',
+                              borderColor: 'border-indigo-500',
+                              desc: tx('Wystrzeliwuje 3 pociski naraz z szerokim rozrzutem (kosztem dłuższego przeładowania). Błyskawicznie wywołuje reakcje na małym dystansie.'),
+                              locked: !isMulti && !st.unlockedCharacters.includes('black_cat')
+                          },
+                          {
+                              id: 'bohr_cat',
+                              name: tx('Niels Bohr-kot'),
+                              weapon: 'Tarcza orbitalna (Orbit)',
+                              cost: 3,
+                              icon: '😼',
+                              badgeColor: 'bg-cyan-500/20 text-cyan-300 border-cyan-500/40',
+                              bgGradient: 'from-cyan-950/50 to-slate-900',
+                              borderColor: 'border-cyan-500',
+                              desc: tx('Pociski krążą wokół kota po orbitach kwantowych, tworząc obrotową barierę atomową niszczącą wrogów w kontakcie.'),
+                              locked: !isMulti && !st.unlockedCharacters.includes('bohr_cat')
+                          },
+                          {
+                              id: 'curie_cat',
+                              name: tx('Miauria Purrie Miałkowska'),
+                              weapon: 'Rad (Ra) + Polon (Po) | +1 HP/s',
+                              cost: 10,
+                              icon: '😻',
+                              badgeColor: 'bg-fuchsia-500/20 text-fuchsia-300 border-fuchsia-500/40',
+                              bgGradient: 'from-fuchsia-950/60 to-slate-900',
+                              borderColor: 'border-fuchsia-500',
+                              desc: tx('Startuje z radioaktywnym Radem (Ra) i Polonem (Po). Posiada pasywną regenerację zdrowia (+1.0 HP/s).'),
+                              locked: !isMulti && !st.unlockedCharacters.includes('curie_cat')
+                          },
+                          {
+                              id: 'mendelejew',
+                              name: tx('Dmitrij Mendelejew'),
+                              weapon: '4 losowe atomy z tablicy',
+                              cost: 0,
+                              floorReq: 5,
+                              icon: '🦁',
+                              badgeColor: 'bg-amber-500/20 text-amber-300 border-amber-500/40',
+                              bgGradient: 'from-amber-950/60 to-slate-900',
+                              borderColor: 'border-amber-500',
+                              desc: tx('Legendarny twórca układu okresowego. Odblokowywany wyłącznie za pokonanie 5. poziomu gry. Zaczyna z 4 losowymi pierwiastkami z całej tablicy.'),
+                              locked: !isMulti && !st.unlockedCharacters.includes('mendelejew')
+                          }
+                      ];
 
-                        return (
-                             <div 
-                                className="w-[140px] h-[140px] md:w-[220px] md:h-[220px] relative rounded-full border-[6px] border-slate-700/80 bg-[#1e293b]/70 backdrop-blur-xl shadow-[0_0_40px_rgba(0,0,0,0.8)] pointer-events-auto transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] flex items-center justify-center cursor-grab active:cursor-grabbing hover:border-slate-500/80 touch-none"
-                                style={{ transform: `rotate(${rotDeg}deg)` }}
-                                onPointerDown={(e) => {
-                                   e.stopPropagation();
-                                   charTouchStartX.current = e.clientX;
-                                }}
-                                onPointerUp={(e) => {
-                                   e.stopPropagation();
-                                   if (!charTouchStartX.current) return;
-                                   const touchEndX = e.clientX;
-                                   const diff = charTouchStartX.current - touchEndX;
-                                   if (Math.abs(diff) > 20) {
-                                       if (diff > 0) {
-                                           let newIdx = selIndex + 1;
-                                           if (newIdx >= items.length) newIdx = 0;
-                                           st.selectedCharacter = items[newIdx] as any;
-                                           setTriggerRender(r=>r+1);
-                                       } else {
-                                           let newIdx = selIndex - 1;
-                                           if (newIdx < 0) newIdx = items.length - 1;
-                                           st.selectedCharacter = items[newIdx] as any;
-                                           setTriggerRender(r=>r+1);
-                                       }
-                                   } else {
-                                      const isMultiplayer = localStorage.getItem('lanActive') === 'true';
-                                      const isBlackLocked = !isMultiplayer && st.selectedCharacter === 'black_cat' && !st.unlockedCharacters.includes('black_cat');
-                                      const isBohrLocked = !isMultiplayer && st.selectedCharacter === 'bohr_cat' && !st.unlockedCharacters.includes('bohr_cat');
-                                      const isCurieLocked = !isMultiplayer && st.selectedCharacter === 'curie_cat' && !st.unlockedCharacters.includes('curie_cat');
-                                       
-                                       if (isBlackLocked) {
-                                           if (st.protons >= 1) {
-                                               st.protons -= 1;
-                                               st.unlockedCharacters.push('black_cat');
-                                               st.characterSelected = true;
-                                               engineRef.current?.selectCharacter(st.selectedCharacter);
-                                               engineRef.current?.saveGame();
-                                           } else {
-                                               setShakeChar('black_cat');
-                                               setTimeout(() => setShakeChar(''), 1000);
-                                           }
-                                       } else if (isBohrLocked) {
-                                           if (st.protons >= 3) {
-                                               st.protons -= 3;
-                                               st.unlockedCharacters.push('bohr_cat');
-                                               st.characterSelected = true;
-                                               engineRef.current?.selectCharacter(st.selectedCharacter);
-                                               engineRef.current?.saveGame();
-                                           } else {
-                                               setShakeChar('bohr_cat');
-                                               setTimeout(() => setShakeChar(''), 1000);
-                                           }
-                                       } else if (isCurieLocked) {
-                                           if (st.protons >= 10) {
-                                               st.protons -= 10;
-                                               st.unlockedCharacters.push('curie_cat');
-                                               st.characterSelected = true;
-                                               engineRef.current?.selectCharacter(st.selectedCharacter);
-                                               engineRef.current?.saveGame();
-                                           } else {
-                                               setShakeChar('curie_cat');
-                                               setTimeout(() => setShakeChar(''), 1000);
-                                           }
-                                       } else {
-                                           st.characterSelected = true;
-                                           engineRef.current?.selectCharacter(st.selectedCharacter);
-                                           engineRef.current?.saveGame();
-                                       }
-                                       setTriggerRender(r => r + 1);
-                                   }
-                                   charTouchStartX.current = 0;
-                                }}
-                                onPointerLeave={(e) => {
-                                   if (charTouchStartX.current) {
-                                       const touchEndX = e.clientX;
-                                       const diff = charTouchStartX.current - touchEndX;
-                                       if (Math.abs(diff) > 20) {
-                                           if (diff > 0) {
-                                               let newIdx = selIndex + 1;
-                                               if (newIdx >= items.length) newIdx = 0;
-                                               st.selectedCharacter = items[newIdx] as any;
-                                               setTriggerRender(r=>r+1);
-                                           } else {
-                                               let newIdx = selIndex - 1;
-                                               if (newIdx < 0) newIdx = items.length - 1;
-                                               st.selectedCharacter = items[newIdx] as any;
-                                               setTriggerRender(r=>r+1);
-                                           }
-                                       }
-                                       charTouchStartX.current = 0;
-                                   }
-                                }}
-                             >
-                                 {items.map((char, idx, arr) => {
-                                     const angle = (idx / arr.length) * Math.PI * 2 - Math.PI / 2;
-                                     const selected = idx === selIndex;
-                                     const r = 70;
-                                     const x = Math.cos(angle) * r;
-                                     const y = Math.sin(angle) * r;
-                                     
-                                     const actualChar = char;
-                                     const isMulti = localStorage.getItem('lanActive') === 'true';
-                                     const isBlackLocked = !isMulti && actualChar === 'black_cat' && !st.unlockedCharacters.includes('black_cat');
-                                     const isBohrLocked = !isMulti && actualChar === 'bohr_cat' && !st.unlockedCharacters.includes('bohr_cat');
-                                     const isCurieLocked = !isMulti && actualChar === 'curie_cat' && !st.unlockedCharacters.includes('curie_cat');
-                                     const isLocked = isBlackLocked || isBohrLocked || isCurieLocked;
-                                     
-                                     const isBlack = actualChar === 'black_cat';
-                                     const isBohr = actualChar === 'bohr_cat';
-                                     
-                                     let name = 'Kinus Miauling';
-                                     if (actualChar === 'black_cat') {
-                                         name = isBlackLocked ? 'Amedeo Avo-gatto (Odblokuj: 1 Proton)' : 'Amedeo Avo-gatto';
-                                     } else if (actualChar === 'bohr_cat') {
-                                         name = isBohrLocked ? 'Miałs Bohr (Odblokuj: 3 Protony)' : 'Miałs Bohr';
-                                     } else if (actualChar === 'curie_cat') {
-                                         name = isCurieLocked ? 'Miauria Purrie (Odblokuj: 10 Protonów)' : 'Miauria Purrie Miałkowska';
-                                     }
+                      const selectedChar = catCharacters.find(c => c.id === st.selectedCharacter) || catCharacters[0];
+                      const canAfford = selectedChar.locked && selectedChar.cost > 0 && st.protons >= selectedChar.cost;
 
-                                     const shakeClass = shakeChar === char ? 'translate-x-1 rotate-3' : '';
-                                     
-                                     return (
-                                         <div 
-                                             key={char} 
-                                             onClick={(e) => {
-                                                 e.stopPropagation();
-                                                 st.selectedCharacter = actualChar as any;
-                                                 if (!isLocked) {
-                                                     st.characterSelected = true;
-                                                     engineRef.current?.selectCharacter(st.selectedCharacter);
-                                                     engineRef.current?.saveGame();
-                                                 } else {
-                                                    if (isBlackLocked) {
-                                                        if (st.protons >= 1) {
-                                                            st.protons -= 1;
-                                                            st.unlockedCharacters.push('black_cat');
-                                                            st.characterSelected = true;
-                                                            engineRef.current?.selectCharacter(st.selectedCharacter);
-                                                            engineRef.current?.saveGame();
-                                                        } else { setShakeChar('black_cat'); setTimeout(() => setShakeChar(''), 1000); }
-                                                    } else if (isBohrLocked) {
-                                                        if (st.protons >= 3) {
-                                                            st.protons -= 3;
-                                                            st.unlockedCharacters.push('bohr_cat');
-                                                            st.characterSelected = true;
-                                                            engineRef.current?.selectCharacter(st.selectedCharacter);
-                                                            engineRef.current?.saveGame();
-                                                        } else { setShakeChar('bohr_cat'); setTimeout(() => setShakeChar(''), 1000); }
-                                                    } else if (isCurieLocked) {
-                                                        if (st.protons >= 10) {
-                                                            st.protons -= 10;
-                                                            st.unlockedCharacters.push('curie_cat');
-                                                            st.characterSelected = true;
-                                                            engineRef.current?.selectCharacter(st.selectedCharacter);
-                                                            engineRef.current?.saveGame();
-                                                        } else { setShakeChar('curie_cat'); setTimeout(() => setShakeChar(''), 1000); }
-                                                    }
-                                                 }
-                                                 setTriggerRender(r=>r+1);
-                                             }}
-                                             className="absolute transition-all duration-75 cursor-pointer" 
-                                             style={{ left: `calc(50% + ${x}px)`, top: `calc(50% + ${y}px)` }}
-                                         >
-                                             <div 
-                                                 className={`w-20 h-20 -ml-10 -mt-10 rounded-full flex flex-col items-center justify-center font-black transition-all ${selected ? 'shadow-[0_0_20px_#fff] z-30 scale-110' : 'opacity-30 z-10 scale-75'}`}
-                                                 style={{ transform: `rotate(${-rotDeg}deg)` }}
-                                             >
-                                                 {selected && <div className="absolute -top-8 whitespace-nowrap text-white font-bold text-xs bg-black/60 px-2 py-1 rounded-full">{name}</div>}
-                                                 {isLocked ? (
-                                                     <div className="relative flex items-center justify-center">
-                                                         <span className="text-3xl grayscale contrast-125 brightness-75">🐱</span>
-                                                         <span className={`absolute text-3xl inline-block origin-center ${shakeChar === char ? 'animate-padlock-shake' : ''}`}>🔒</span>
-                                                     </div>
-                                                 ) : (
-                                                     <span className={`text-4xl ${isBlack ? 'grayscale contrast-125 brightness-75 drop-shadow-[0_0_2px_rgba(255,255,255,0.8)]' : (isBohr ? 'grayscale contrast-150 brightness-75 drop-shadow-[0_0_2px_rgba(34,211,238,0.8)]' : '')}`}>🐱</span>
-                                                 )}
-                                                 {selected && isBlackLocked && (
-                                                     <div className="absolute -bottom-8 whitespace-nowrap text-red-400 font-bold text-[10px] bg-red-950 px-2 py-1 border border-red-500 rounded-full drop-shadow-[0_0_5px_rgba(239,68,68,0.8)]">1 Proton (Kup by odblokować)</div>
-                                                 )}
-                                                 {selected && isBohrLocked && (
-                                                     <div className="absolute -bottom-8 whitespace-nowrap text-red-400 font-bold text-[10px] bg-red-950 px-2 py-1 border border-red-500 rounded-full drop-shadow-[0_0_5px_rgba(239,68,68,0.8)]">3 Protony (Kup by odblokować)</div>
-                                                 )}
-                                             </div>
-                                         </div>
-                                     );
-                                 })}
-                             </div>
-                         );
-                     })()}
-                     {/* Way oversized golden selection circle on cat selection */}
-                     
-                     
-                 </div>
-             </div>
+                      return (
+                          <div className="w-full max-w-3xl flex flex-col items-center">
+                              {/* Header */}
+                              <div className="text-center mb-3 sm:mb-4">
+                                  <h2 className="text-2xl sm:text-3xl md:text-4xl font-black text-white tracking-widest uppercase drop-shadow-[0_0_20px_rgba(255,255,255,0.4)]">
+                                      Wybierz Kota
+                                  </h2>
+                                  <div className="flex items-center justify-center gap-2 mt-1">
+                                      <span className="text-xs sm:text-sm text-slate-400 font-semibold">Kliknij kota, aby go przejrzeć. Wybór zatwierdzasz przyciskiem poniżej:</span>
+                                      <span className="bg-purple-950/80 border border-purple-500/50 text-purple-300 text-xs font-bold px-2.5 py-0.5 rounded-full shadow-inner">
+                                          ⚛️ {st.protons} Protonów
+                                      </span>
+                                  </div>
+                              </div>
+
+                              {/* Characters Card Grid */}
+                              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 sm:gap-3 w-full mb-3 sm:mb-4">
+                                  {catCharacters.map(char => {
+                                      const isSelected = char.id === selectedChar.id;
+                                      return (
+                                          <button
+                                              key={char.id}
+                                              type="button"
+                                              onClick={() => {
+                                                  // Only preview / select the character - NEVER instantly confirm or start the game!
+                                                  st.selectedCharacter = char.id as any;
+                                                  setTriggerRender(r => r + 1);
+                                              }}
+                                              className={`relative p-2.5 sm:p-3 rounded-2xl border-2 transition-all flex flex-col items-center text-center cursor-pointer bg-gradient-to-b ${char.bgGradient} ${
+                                                  isSelected 
+                                                      ? `${char.borderColor} ring-4 ring-white/20 shadow-[0_0_25px_rgba(255,255,255,0.3)] scale-[1.03] z-10` 
+                                                      : 'border-white/10 opacity-75 hover:opacity-100 hover:border-white/30'
+                                              }`}
+                                          >
+                                              {/* Locked Badge */}
+                                              {char.locked && (
+                                                  <div className="absolute top-1.5 right-1.5 bg-black/80 text-yellow-400 text-[10px] font-bold px-1.5 py-0.5 rounded-md border border-yellow-500/40 flex items-center gap-0.5">
+                                                      <span>🔒</span>
+                                                      {char.floorReq ? <span>🏆 Ukończ grę</span> : (char.cost > 0 ? <span>{char.cost}p⁺</span> : null)}
+                                                  </div>
+                                              )}
+
+                                              {/* Avatar */}
+                                              <div className="text-3xl sm:text-4xl my-1 sm:my-2 drop-shadow-md">
+                                                  {char.icon}
+                                              </div>
+
+                                              {/* Name */}
+                                              <div className="text-xs sm:text-sm font-black text-white leading-tight mb-1 truncate w-full">
+                                                  {char.name}
+                                              </div>
+
+                                              {/* Element Badge */}
+                                              <div className={`text-[9px] font-bold px-2 py-0.5 rounded-full border ${char.badgeColor} truncate w-full`}>
+                                                  {char.weapon}
+                                              </div>
+                                          </button>
+                                      );
+                                  })}
+                              </div>
+
+                              {/* Selected Character Preview Panel */}
+                              <div className="w-full bg-slate-900/90 border border-white/15 rounded-2xl p-3 sm:p-4 mb-4 shadow-xl backdrop-blur-md flex flex-col sm:flex-row items-center sm:items-start gap-3 sm:gap-4">
+                                  <div className="text-4xl sm:text-5xl shrink-0 p-3 bg-black/40 rounded-2xl border border-white/10 flex items-center justify-center">
+                                      {selectedChar.icon}
+                                  </div>
+                                  <div className="flex-1 text-center sm:text-left min-w-0">
+                                      <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2 mb-1">
+                                          <h3 className="text-base sm:text-lg font-black text-white">{selectedChar.name}</h3>
+                                          <span className={`text-[10px] font-bold px-2.5 py-0.5 rounded-full border ${selectedChar.badgeColor}`}>
+                                              {selectedChar.weapon}
+                                          </span>
+                                          {selectedChar.locked ? (
+                                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-red-950/80 border border-red-500/50 text-red-300">
+                                                  🔒 Zablokowany
+                                              </span>
+                                          ) : (
+                                              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-950/80 border border-emerald-500/50 text-emerald-300">
+                                                  ✓ Dostępny
+                                              </span>
+                                          )}
+                                      </div>
+                                      <p className="text-xs sm:text-sm text-slate-300 leading-snug">
+                                          {selectedChar.desc}
+                                      </p>
+                                  </div>
+                              </div>
+
+                              {/* Action Buttons: Confirm Selection or Unlock */}
+                              <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                                  {!selectedChar.locked ? (
+                                      <button
+                                          type="button"
+                                          onClick={() => {
+                                              // Explicit confirmation to play with this character!
+                                              st.characterSelected = true;
+                                              engineRef.current?.selectCharacter(st.selectedCharacter);
+                                              engineRef.current?.saveGame();
+                                              setTriggerRender(r => r + 1);
+                                          }}
+                                          className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-emerald-600 to-green-500 hover:from-emerald-500 hover:to-green-400 active:scale-95 text-white font-black text-sm sm:text-base uppercase tracking-wider rounded-xl shadow-[0_0_25px_rgba(16,185,129,0.5)] border border-emerald-400 transition-all cursor-pointer flex items-center justify-center gap-2"
+                                      >
+                                          <span>✅</span>
+                                          <span>Zatwierdź Postać i Rozpocznij ({selectedChar.name})</span>
+                                      </button>
+                                  ) : canAfford ? (
+                                      <button
+                                          type="button"
+                                          onClick={() => {
+                                              st.protons -= selectedChar.cost;
+                                              st.unlockedCharacters.push(selectedChar.id as any);
+                                              engineRef.current?.saveGame();
+                                              setTriggerRender(r => r + 1);
+                                          }}
+                                          className="w-full sm:w-auto px-8 py-3.5 bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 active:scale-95 text-white font-black text-sm sm:text-base uppercase tracking-wider rounded-xl shadow-[0_0_25px_rgba(168,85,247,0.5)] border border-purple-400 transition-all cursor-pointer flex items-center justify-center gap-2"
+                                      >
+                                          <span>🔓</span>
+                                          <span>Odblokuj za {selectedChar.cost} Protonów (Masz: {st.protons} p⁺)</span>
+                                      </button>
+                                  ) : (
+                                      <div className="w-full sm:w-auto px-6 py-3 bg-slate-800/80 border border-slate-700 text-slate-400 font-bold text-xs sm:text-sm rounded-xl flex items-center justify-center gap-2 text-center">
+                                          <span>🔒</span>
+                                          <span>
+                                              {selectedChar.floorReq 
+                                                  ? '🏆 Zwycięzca gry: Ukończ całą grę (pokonaj 5. poziom), aby odblokować Mendelejewa!' 
+                                                  : `Wymaga ${selectedChar.cost} Protonów do odblokowania (masz ${st.protons} p⁺)`}
+                                          </span>
+                                      </div>
+                                  )}
+                              </div>
+                          </div>
+                      );
+                  })()}
+              </div>
          ) : (
            <div 
                className="absolute right-2 md:right-12 w-24 h-24 md:w-32 md:h-32 z-50 pointer-events-none flex items-center justify-center transition-all duration-75"
@@ -2871,7 +2879,7 @@ export const GameCanvas = () => {
                         ></div>
                     )}
                     <div className="absolute -bottom-6 w-full text-center text-[10px] font-bold text-slate-400 tracking-widest bg-black/50 py-1 rounded-full pointer-events-none break-words">
-                      PRZESUŃ BY WYBRAĆ
+                      {tx("PRZESUŃ BY WYBRAĆ")}
                     </div>
                     {st.hasSuperWeapon && (
                         <button 
@@ -2897,7 +2905,7 @@ export const GameCanvas = () => {
       {bossIntro?.active && (
         <div className="absolute inset-0 flex items-center justify-center bg-black/90 z-[120]">
             <div className="text-center animate-[pulse_1s_ease-in-out_infinite] px-4">
-                <h2 className="text-red-500 font-black text-lg md:text-2xl tracking-[0.5em] md:tracking-[1em] uppercase mb-4 shadow-red-500/50 drop-shadow-[0_0_20px_rgba(239,68,68,0.8)]">OSTRZEŻENIE: BOSS</h2>
+                <h2 className="text-red-500 font-black text-lg md:text-2xl tracking-[0.5em] md:tracking-[1em] uppercase mb-4 shadow-red-500/50 drop-shadow-[0_0_20px_rgba(239,68,68,0.8)]">{tx("")}</h2>
                 <h1 className="text-4xl md:text-6xl font-black text-white uppercase drop-shadow-[0_0_30px_rgba(255,255,255,0.8)] mb-4 transition-transform">{bossIntro.name}</h1>
                 <p className="text-md md:text-xl text-slate-300 italic max-w-2xl mx-auto block">
                     {bossIntro.description}
@@ -2907,31 +2915,31 @@ export const GameCanvas = () => {
       )}
 
       {reactionDiscovery?.active && engineRef.current && (
-        <div className="absolute top-4 left-4 z-[110] bg-slate-900/95 border border-indigo-500 rounded-xl p-3 md:p-4 shadow-[0_0_20px_rgba(99,102,241,0.4)] flex gap-4 max-w-xs md:max-w-sm w-[90vw] md:w-full backdrop-blur-md animate-slide-in">
-             <div className="shrink-0 flex flex-col items-center justify-center pt-1" onClick={() => { if (engineRef.current) { engineRef.current.state.reactionDiscovery = null; } setReactionDiscovery(null); }}>
+        <div className="absolute top-3 left-3 z-[110] bg-slate-950/90 border border-indigo-500/60 rounded-xl p-2.5 shadow-[0_0_15px_rgba(99,102,241,0.3)] flex items-center gap-2.5 max-w-[280px] backdrop-blur-md animate-slide-in pointer-events-auto">
+             <div className="shrink-0 flex items-center justify-center cursor-pointer" onClick={() => { if (engineRef.current) { engineRef.current.state.reactionDiscovery = null; } setReactionDiscovery(null); }}>
                  <MoleculeGraphic atoms={reactionDiscovery.atoms || ['?']} size="sm" />
              </div>
-             <div className="flex flex-col">
-                 <div className="text-[9px] text-indigo-400 font-bold uppercase tracking-widest mb-1 flex justify-between">
-                     <span>{reactionDiscovery.equation === 'Odblokowano nowy pierwiastek' ? 'Nowy pierwiastek odkryty' : 'Nowe wiązanie'}</span>
-                     <span className="text-slate-500 cursor-pointer hover:text-white" onClick={() => { if (engineRef.current) { engineRef.current.state.reactionDiscovery = null; } setReactionDiscovery(null); }}>❌</span>
+             <div className="flex flex-col min-w-0 flex-1">
+                 <div className="text-[8px] text-indigo-400 font-bold uppercase tracking-wider flex justify-between items-center mb-0.5">
+                     <span className="truncate">{reactionDiscovery.equation === tx("Odblokowano nowy pierwiastek") ? tx("Nowy pierwiastek") : tx("Nowe wiązanie")}</span>
+                     <span className="text-slate-400 hover:text-white cursor-pointer ml-1 text-xs" onClick={() => { if (engineRef.current) { engineRef.current.state.reactionDiscovery = null; } setReactionDiscovery(null); }}>✕</span>
                  </div>
-                 <div className="text-sm font-black text-white leading-tight mb-1">{reactionDiscovery.name}</div>
-                 <div className="text-xs text-yellow-400 font-mono font-bold mb-1">{reactionDiscovery.equation}</div>
-                 <div className="text-[10px] md:text-xs text-slate-300">{reactionDiscovery.description}</div>
+                 <div className="text-xs font-black text-white leading-tight truncate">{reactionDiscovery.name}</div>
+                 <div className="text-[10px] text-yellow-400 font-mono font-bold truncate">{reactionDiscovery.equation}</div>
+                 <div className="text-[9px] text-slate-300 truncate">{reactionDiscovery.description}</div>
              </div>
         </div>
       )}
 
       {marketDiscovery?.active && engineRef.current && (
-        <div className="absolute top-4 right-4 z-[110] bg-slate-900/95 border border-emerald-500 rounded-xl p-3 md:p-4 shadow-[0_0_20px_rgba(16,185,129,0.4)] flex gap-4 max-w-xs md:max-w-sm w-[90vw] md:w-full backdrop-blur-md animate-slide-in">
-             <div className="flex flex-col w-full">
-                 <div className="text-[9px] text-emerald-400 font-bold uppercase tracking-widest mb-1 flex justify-between">
-                     <span>Giełda Atomowa</span>
-                     <span className="text-slate-500 cursor-pointer hover:text-white" onClick={() => { if (engineRef.current) { engineRef.current.state.marketDiscovery = null; } setMarketDiscovery(null); }}>❌</span>
+        <div className="absolute top-3 right-3 z-[110] bg-slate-950/90 border border-emerald-500/60 rounded-xl p-2.5 shadow-[0_0_15px_rgba(16,185,129,0.3)] flex items-center gap-2 max-w-[280px] backdrop-blur-md animate-slide-in pointer-events-auto">
+             <div className="flex flex-col min-w-0 flex-1">
+                 <div className="text-[8px] text-emerald-400 font-bold uppercase tracking-wider flex justify-between items-center mb-0.5">
+                     <span>📈 Wiadomości z Giełdy</span>
+                     <span className="text-slate-400 hover:text-white cursor-pointer text-xs" onClick={() => { if (engineRef.current) { engineRef.current.state.marketDiscovery = null; } setMarketDiscovery(null); }}>✕</span>
                  </div>
-                 <div className="text-sm font-black text-white leading-tight mb-1">{marketDiscovery.title}</div>
-                 <div className="text-[10px] md:text-xs text-slate-300 whitespace-pre-wrap">{marketDiscovery.content}</div>
+                 <div className="text-xs font-black text-white leading-tight truncate">{marketDiscovery.title}</div>
+                 <div className="text-[9px] text-slate-300 line-clamp-2">{marketDiscovery.content}</div>
              </div>
         </div>
       )}
@@ -2964,7 +2972,7 @@ export const GameCanvas = () => {
                 </div>
 
                 <div className="flex flex-col text-left justify-center flex-1 py-4">
-                    <h2 className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">SZCZEGÓŁY WIĄZANIA</h2>
+                    <h2 className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-slate-400 mb-1">{tx("")}</h2>
                     <h1 className="text-2xl md:text-5xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.5)] mb-2 md:mb-4">{previewReaction.name}</h1>
                     <div className="text-lg md:text-2xl font-mono text-yellow-400 font-bold mb-3 md:mb-6 tracking-widest bg-black/40 py-2 px-4 rounded-xl border border-slate-700 w-fit">
                         {previewReaction.equation}
@@ -3001,7 +3009,7 @@ export const GameCanvas = () => {
       )}
 
       {showingOptions && engineRef.current && (
-         <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-slate-100 z-[100] backdrop-blur-md p-4">
+         <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-black/80 text-slate-100 z-[100] backdrop-blur-md p-4">
              <div className={`bg-gradient-to-r from-slate-900 to-[#0a0a0f] border-2 border-slate-500 shadow-[0_0_35px_rgba(255,255,255,0.2)] w-full ${optionsTab === 'market' ? 'max-w-3xl' : 'max-w-sm'} rounded-2xl p-4 md:p-5 relative flex flex-col gap-3 max-h-[96vh] overflow-y-auto transition-all`}>
                 {optionsTab !== 'main' ? (
                   <button 
@@ -3027,36 +3035,36 @@ export const GameCanvas = () => {
                           }
                           setOptionsTab('main');
                       }}>
-                      🏠 Do Menu
+                      {tx("🏠 Do Menu")}
                     </button>
-                    <h2 className="text-xl font-black tracking-tight text-white text-center">☰ OPCJE</h2>
+                    <h2 className="text-xl font-black tracking-tight text-white text-center">{tx("☰ OPCJE")}</h2>
                     <div className="grid grid-cols-2 gap-2 mt-1">
                     <button 
                         onClick={() => { if(engineRef.current) { engineRef.current.state.showingOptions = false; engineRef.current.state.showingShop = true; } }}
                         className="bg-green-600/50 hover:bg-green-500/55 border border-green-500/20 rounded-xl px-2 py-2.5 font-bold text-xs text-green-100 transition-all flex items-center justify-center gap-1.5"
                     >
-                        🛒 Lab (Sklep)
+                        {tx("🛒 Lab (Sklep)")}
                     </button>
                     
                     <button 
                         onClick={() => { if(engineRef.current) { engineRef.current.state.showingOptions = false; engineRef.current.state.showingRecipeBook = true; } }}
                         className="bg-indigo-900/50 hover:bg-indigo-800/55 border border-indigo-400/20 rounded-xl px-2 py-2.5 font-bold text-xs text-indigo-100 transition-all flex items-center justify-center gap-1.5"
                     >
-                        📖 Księga Wiązań
+                        {tx("📖 Księga Wiązań")}
                     </button>
                     
                     <button 
                         onClick={() => { if(engineRef.current) { engineRef.current.state.showingOptions = false; engineRef.current.state.showingStats = true; } }}
                         className="bg-blue-900/50 hover:bg-blue-800/55 border border-blue-400/20 rounded-xl px-2 py-2.5 font-bold text-xs text-blue-100 transition-all flex items-center justify-center gap-1.5"
                     >
-                        📊 Statystyki
+                        {tx("📊 Statystyki")}
                     </button>
 
                     <button 
                         onClick={() => { if(engineRef.current) { engineRef.current.state.showingOptions = false; engineRef.current.state.showingSaves = true; } }}
                         className="bg-slate-800 hover:bg-slate-700 border border-slate-605 rounded-xl px-2 py-2.5 font-bold text-xs text-white transition-all flex items-center justify-center gap-1.5"
                     >
-                        💾 Zapisy Gry
+                        💾 {tx("Zapisy Gry")}
                     </button>
                     </div>
 
@@ -3065,22 +3073,29 @@ export const GameCanvas = () => {
                           onClick={() => { if(engineRef.current) { engineRef.current.state.showingOptions = false; setShowingPeriodicTable(true); } }}
                           className="w-full bg-indigo-600/50 hover:bg-indigo-500/55 border border-indigo-500/20 rounded-xl px-2 py-2.5 text-xs font-bold text-indigo-100 transition-all flex items-center justify-center gap-1.5"
                       >
-                          ⚛️ Tablica Mendelejewa
+                          {tx("⚛️ Tablica Mendelejewa")}
                       </button>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 mt-1">
+                      
+                      <button 
+                          onClick={() => setOptionsTab('feedback')}
+                          className="bg-indigo-600/50 hover:bg-indigo-500/55 border border-indigo-500/20 rounded-xl px-2 py-2 text-xs font-bold text-indigo-100 transition-all flex items-center justify-center gap-1.5 col-span-2 shadow-[0_0_15px_rgba(79,70,229,0.3)] mt-2"
+                      >
+                          💬 {tx("Opinia i Prywatność")} (+50 p⁺)
+                      </button>
                       <button 
                           onClick={() => setOptionsTab('investments')}
                           className="bg-amber-600/50 hover:bg-amber-500/55 border border-amber-500/20 rounded-xl px-2 py-2 text-xs font-bold text-amber-100 transition-all flex items-center justify-center gap-1.5"
                       >
-                          📈 Giełda
+                          {tx("📈 Giełda")}
                       </button>
                       <button 
                           onClick={() => setOptionsTab('settings')}
                           className="bg-gray-600/50 hover:bg-gray-500/55 border border-gray-500/20 rounded-xl px-2 py-2 text-xs font-bold text-gray-200 transition-all flex items-center justify-center gap-1.5"
                       >
-                          ⚙️ Ustawienia
+                          {tx("⚙️ Ustawienia")}
                       </button>
                     </div>
 
@@ -3096,14 +3111,96 @@ export const GameCanvas = () => {
                                 setOptionsTab('main');
                             }}
                         >
-                            <span>🚪</span> WYJŚCIE DO MENU GŁÓWNEGO
+                            <span>🚪</span> {tx("WYJŚCIE DO MENU GŁÓWNEGO")}
                         </button>
                     </div>
                   </>
                 )}
-                {optionsTab === 'settings' && (
+                
+                {optionsTab === 'feedback' && (
+                  <div className="flex flex-col gap-3">
+                    <h2 className="text-xl font-black tracking-tight text-white mb-1.5 text-center">💬 OPINIA I PRYWATNOŚĆ</h2>
+                    
+                    <div className="bg-slate-900/60 p-3 rounded-xl border border-slate-700/50 text-xs text-slate-300 leading-relaxed max-h-32 overflow-y-auto font-sans">
+                        <strong className="text-white block mb-1">Polityka Prywatności:</strong>
+                        Aplikacja zbiera anonimowe logi błędów oraz opinie w celu poprawy jakości rozgrywki. Nie zbieramy i nie przetwarzamy danych osobowych (np. imienia, adresu e-mail, numeru telefonu, lokalizacji czy Google Advertising ID). Do analizy opinii oraz zachowań graczy wykorzystujemy anonimowe usługi analityczne (Third-party analytics services) w tym asystentów AI (np. Gemini/OpenAI API). Korzystając z funkcji "Wyślij opinię", akceptujesz te zasady.
+                    </div>
+
+                    <div className="bg-indigo-900/40 p-3 rounded-xl border border-indigo-500/30">
+                        <strong className="text-red-400 block mb-2 text-xs uppercase tracking-widest text-center">
+                           ⚠️ Zastrzeżenie!
+                        </strong>
+                        <p className="text-xs text-indigo-200 text-center mb-3">
+                            Prosimy o szczere opinie na temat gry! Zastrzeżenie: Nie wpisuj tu żadnych danych osobowych (np. imienia, e-maila). System przetwarza je w 100% anonimowo.
+                        </p>
+                        
+                        {(() => {
+                            const hasProgression = engineRef.current?.state.unlockedAtoms.length >= 4 || engineRef.current?.state.unlockedCharacters.length >= 2;
+                            const t = feedbackText.trim();
+                            const uniqueChars = new Set(t.toLowerCase().split('')).size;
+                            const isSpam = t.length < 25 || uniqueChars < 8;
+                            
+                            if (engineRef.current?.state.feedbackSubmitted) {
+                                return (
+                                    <div className="flex flex-col gap-2">
+                                        <div className="bg-green-900/40 border border-green-500/50 rounded-lg p-3 text-center">
+                                            <span className="text-2xl block mb-1">💖</span>
+                                            <span className="text-green-300 font-bold text-sm block">Dziękujemy za opinię!</span>
+                                            <span className="text-green-400/80 text-xs">Nagroda 50 p⁺ została przyznana.</span>
+                                        </div>
+                                        <button 
+                                            onClick={() => { window.open('https://play.google.com/store/apps/details?id=com.hackermerge.game', '_blank'); }}
+                                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 rounded-xl transition-all shadow-[0_0_15px_rgba(16,185,129,0.5)] text-xs mt-2"
+                                        >
+                                            ⭐ Oceń grę w Google Play!
+                                        </button>
+                                    </div>
+                                );
+                            }
+
+                            if (!hasProgression) {
+                                return (
+                                    <div className="bg-slate-900/60 border border-slate-700/50 rounded-lg p-4 text-center">
+                                        <span className="text-3xl block mb-2 opacity-50">🔒</span>
+                                        <span className="text-slate-300 font-bold text-sm block mb-1">Wymagany progres</span>
+                                        <span className="text-slate-400 text-xs">Aby zapobiec nadużyciom, opcja wysyłania opinii i darmowych p⁺ jest dostępna dopiero po pokonaniu pierwszych bossów (minimum 4 odblokowane pierwiastki) lub odblokowaniu nowych postaci. Graj dalej!</span>
+                                    </div>
+                                );
+                            }
+
+                            return (
+                                <>
+                                    <textarea 
+                                        className="w-full bg-black/50 border border-indigo-500/50 rounded-lg p-2 text-white text-sm focus:outline-none focus:border-indigo-400 resize-none h-24 mb-2 placeholder-indigo-900"
+                                        placeholder="Napisz co sądzisz o grze, co byś zmienił... (min. 25 znaków, wyczerpujące zdania)"
+                                        value={feedbackText}
+                                        onChange={(e) => setFeedbackText(e.target.value)}
+                                    ></textarea>
+                                    
+                                    <button 
+                                        onClick={() => {
+                                            if (engineRef.current && !isSpam) {
+                                                engineRef.current.state.feedbackSubmitted = true;
+                                                engineRef.current.state.protons += 50;
+                                                engineRef.current.saveGame();
+                                                setFeedbackText("");
+                                                setTriggerRender(r => r + 1);
+                                            }
+                                        }}
+                                        disabled={isSpam}
+                                        className={`w-full font-bold py-2.5 rounded-xl transition-all shadow-lg text-xs ${!isSpam ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_15px_rgba(79,70,229,0.5)]' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
+                                    >
+                                        {!isSpam ? "Wyślij anonimową opinię i zgarnij +50 p⁺" : (t.length < 25 ? "Opinia jest za krótka (min. 25 znaków)" : "Napisz coś bardziej sensownego (spam znaków)")}
+                                    </button>
+                                </>
+                            );
+                        })()}
+                    </div>
+                  </div>
+                )}
+{optionsTab === 'settings' && (
                   <>
-                    <h2 className="text-xl font-black tracking-tight text-white mb-1.5 text-center">⚙️ {tx("USTAWIENIA")}</h2>
+                    <h2 className="text-xl font-black tracking-tight text-white mb-1.5 text-center">{tx("⚙️ USTAWIENIA")}</h2>
                     <button 
                         onTouchStart={() => {
                           if (devTimerRef.current) clearTimeout(devTimerRef.current);
@@ -3211,7 +3308,7 @@ export const GameCanvas = () => {
 
                     <div className="bg-white/5 rounded-xl p-4 border border-white/10 mb-6 font-sans">
                         <label className="flex items-center justify-between cursor-pointer">
-                            <span className="font-bold text-xs tracking-widest text-slate-300">Wyłącz Trzęsienie Ekranu</span>
+                            <span className="font-bold text-xs tracking-widest text-slate-300">{tx(tx("Wyłącz Trzęsienie Ekranu"))}</span>
                             <div className="relative">
                                 <input type="checkbox" className="sr-only" 
                                     checked={engineRef.current?.state.disableScreenShake ?? false}
@@ -3247,6 +3344,25 @@ export const GameCanvas = () => {
                             className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
                         />
                     </div>
+                    
+                    <div className="mb-6">
+                        <label className="flex justify-between text-sm font-bold text-slate-300 mb-2">
+                            Skala Interfejsu (UI):
+                            <span>{Math.round((engineRef.current?.state.uiScale || 1.0) * 100)}%</span>
+                        </label>
+                        <input 
+                            type="range" min="0.5" max="2.0" step="0.05"
+                            value={engineRef.current?.state.uiScale || 1.0}
+                            onChange={(e) => {
+                                if (engineRef.current) {
+                                  engineRef.current.state.uiScale = parseFloat(e.target.value);
+                                  engineRef.current.saveGame(true);
+                                }
+                                setTriggerRender(r=>r+1);
+                            }}
+                            className="w-full h-2 bg-slate-700 rounded-lg appearance-none cursor-pointer accent-indigo-500"
+                        />
+                    </div>
                   </>
                 )}
 
@@ -3268,13 +3384,13 @@ export const GameCanvas = () => {
                             onClick={() => setOptionsTab('market')}
                         >
                             <span className="text-4xl text-white drop-shadow-md">🏛️</span>
-                            <span className="text-xs tracking-widest uppercase font-black">Wejdź na Giełdę</span>
+                            <span className="text-xs tracking-widest uppercase font-black">{tx(tx("Wejdź na Giełdę"))}</span>
                         </button>
                     </div>
                     {/* KONTO OSZCZEDNOSCIOWE */}
                     <div className="bg-white/5 border border-white/10 p-2.5 rounded-xl flex flex-col gap-1.5">
                         <div className="flex justify-between items-center">
-                            <span className="font-black text-xs text-white uppercase tracking-widest">📈 Konto Oszczędnościowe (+3%)</span>
+                            <span className="font-black text-xs text-white uppercase tracking-widest">{tx(tx("📈 Konto Oszczędnościowe (+3%)"))}</span>
                             <span className="font-mono text-green-400 font-bold text-xs bg-green-500/10 px-2 py-0.5 rounded">
                                 {formatMoney(engineRef.current.state.savingsBalance)} e⁻
                             </span>
@@ -3285,7 +3401,7 @@ export const GameCanvas = () => {
                         <div className="grid grid-cols-2 gap-2 mt-0.5 text-[10px]">
                             {/* WPŁATA */}
                             <div className="flex flex-col gap-1">
-                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[8px]">Wpłać:</span>
+                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[8px]">{tx(tx("Wpłać:"))}</span>
                                 <div className="flex gap-1">
                                     <button 
                                         onClick={() => {
@@ -3334,7 +3450,7 @@ export const GameCanvas = () => {
                             
                             {/* WYPŁATA */}
                             <div className="flex flex-col gap-1">
-                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[8px]">Wypłać:</span>
+                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[8px]">{tx(tx("Wypłać:"))}</span>
                                 <div className="flex gap-1">
                                     <button 
                                         onClick={() => {
@@ -3403,12 +3519,12 @@ export const GameCanvas = () => {
                             <div className="bg-[#0f172a] rounded-lg border border-cyan-500/20 p-2 text-center text-[10px]">
                                 <span className="text-slate-400 block mb-0.5">Zablokowane lokowanie obligacji:</span>
                                 <span className="font-bold text-cyan-300 text-xs">
-                                     Pozostałe cykle: <span className="text-white text-sm font-black">{engineRef.current.state.bondsRoomsLeft}</span> / 2
+                                     {tx(tx("Pozostałe cykle: "))}<span className="text-white text-sm font-black">{engineRef.current.state.bondsRoomsLeft}</span> / 2
                                 </span>
                             </div>
                         ) : (
                             <div className="flex flex-col gap-1 mt-0.5">
-                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[8px]">Kup obligację jednorazowo:</span>
+                                <span className="text-slate-400 font-bold uppercase tracking-wider text-[8px]">{tx(tx("Kup obligację jednorazowo:"))}</span>
                                 <div className="flex gap-1 text-[10px]">
                                     <button 
                                         onClick={() => {
@@ -3507,7 +3623,7 @@ export const GameCanvas = () => {
                             </>
                         ) : (
                             <p className="text-[10px] text-slate-500 italic mt-1 pb-1">
-                                Oczekiwanie na graczy... (Zaloguj się w Ustawieniach do sieci LAN)
+                                {tx("Oczekiwanie na graczy... (Zaloguj się w Ustawieniach do sieci LAN)")}
                             </p>
                         )}
                     </div>
@@ -3524,7 +3640,7 @@ export const GameCanvas = () => {
                         >
                             ← Wróć
                         </button>
-                        <h2 className="text-xl font-black tracking-tight text-white text-center">📊 GIEŁDA</h2>
+                        <h2 className="text-xl font-black tracking-tight text-white text-center">{tx("📊 GIEŁDA")}</h2>
                         <div className="w-12"></div>
                     </div>
                     
@@ -3647,7 +3763,7 @@ export const GameCanvas = () => {
       )}
 
       {showingLan && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0B0F19]/90 text-slate-100 z-[100] backdrop-blur-md p-2">
+        <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0B0F19]/90 text-slate-100 z-[100] backdrop-blur-md p-2">
             <div className="bg-gradient-to-br from-slate-900 to-indigo-950 border border-indigo-500/30 shadow-[0_0_40px_rgba(79,70,229,0.3)] w-full max-w-md rounded-2xl p-4 relative flex flex-col gap-3">
                 <button 
                     className="absolute top-4 right-4 text-2xl hover:scale-110 transition-transform text-slate-400 hover:text-white"
@@ -3655,7 +3771,7 @@ export const GameCanvas = () => {
                     ×
                 </button>
                 <h2 className="text-xl font-black tracking-tight text-white text-center flex items-center justify-center gap-2">
-                    <span className="text-indigo-400">⚛️</span> Tryb Wieloosobowy
+                    <span className="text-indigo-400">⚛️</span> {tx("Tryb Wieloosobowy")}
                 </h2>
                 <p className="text-center text-slate-400 text-xs">Aż do 4 graczy! Bądź na tym samym linku.</p>
                 
@@ -3745,7 +3861,7 @@ export const GameCanvas = () => {
       )}
 
       {engineRef.current?.state.showingLobby && (
-         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/90 text-slate-100 z-[120] backdrop-blur-xl p-2 md:p-4">
+         <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/90 text-slate-100 z-[120] backdrop-blur-xl p-2 md:p-4">
              <div className="bg-gradient-to-br from-indigo-950 to-slate-900 border border-indigo-500/50 w-full max-w-sm md:max-w-lg rounded-2xl md:rounded-3xl p-4 md:p-6 relative shadow-[0_0_50px_rgba(99,102,241,0.3)]">
                 <button 
                   className="absolute top-4 right-4 md:top-6 md:right-6 text-xl md:text-2xl hover:scale-110 transition-transform text-slate-400 hover:text-white"
@@ -3805,7 +3921,7 @@ export const GameCanvas = () => {
                         onClick={() => { if(engineRef.current) engineRef.current.state.showingLobby = false; }}
                         className="bg-slate-800 hover:bg-slate-700 text-white font-bold py-2 md:py-2.5 px-4 rounded-xl border border-slate-600 transition-all text-xs md:text-sm"
                     >
-                        Wróć do Menu
+                        {tx("Wróć do Menu")}
                     </button>
                 </div>
              </div>
@@ -3813,25 +3929,25 @@ export const GameCanvas = () => {
       )}
 
       {showingSaves && engineRef.current && (
-         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[120] backdrop-blur-xl p-4">
+         <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[120] backdrop-blur-xl p-4">
              <div className="bg-white/5 border border-white/10 w-full max-w-md md:max-w-xl rounded-2xl p-3 md:p-5 relative shadow-2xl max-h-[96vh] overflow-y-auto">
                 <button 
                   className="absolute top-4 right-4 md:top-6 md:right-6 text-xl md:text-2xl hover:scale-110 transition-transform"
                   onClick={() => { if(engineRef.current) engineRef.current.state.showingSaves = false; }}>
                   ❌
                 </button>
-                <h2 className="text-sm md:text-lg font-black tracking-tight mb-2 md:mb-4 text-slate-300 border-b border-slate-700 pb-1 md:pb-2">💾 Zapisy Gry</h2>
+                <h2 className="text-sm md:text-lg font-black tracking-tight mb-2 md:mb-4 text-slate-300 border-b border-slate-700 pb-1 md:pb-2">💾 {tx("Zapisy Gry")}</h2>
                 
                 <div className="flex flex-col md:grid md:grid-cols-2 gap-3 md:gap-4">
                     {engineRef.current.getSaveSlotsInfo().map((slotInfo) => (
                         <div key={slotInfo.slot} className="bg-slate-900/50 border border-slate-600/50 rounded-xl p-2.5 flex flex-col justify-between shadow-md gap-2">
                             <div className="flex flex-row gap-3 items-center justify-between">
                                 <div className="flex flex-col">
-                                    <span className="text-sm font-bold text-white mb-0.5 leading-tight">Slot {slotInfo.slot} <span className="text-[10px] font-normal text-slate-400">{engineRef.current?.currentSaveSlot === slotInfo.slot ? '(Obecny)' : ''}</span></span>
+                                    <span className="text-sm font-bold text-white mb-0.5 leading-tight">Slot {slotInfo.slot} <span className="text-[10px] font-normal text-slate-400">{engineRef.current?.currentSaveSlot === slotInfo.slot ? '{tx("(Obecny)")}' : ''}</span></span>
                                     {slotInfo.empty ? (
-                                        <span className="text-[10px] text-slate-500 leading-none">Pusty slot</span>
+                                        <span className="text-[10px] text-slate-500 leading-none">{tx("Pusty slot")}</span>
                                     ) : (
-                                        <span className="text-[10px] text-indigo-300 leading-none font-mono">Poziom: {slotInfo.level} | e⁻: {Number(slotInfo.electrons).toExponential(3)}</span>
+                                        <span className="text-[10px] text-indigo-300 leading-none font-mono">{tx("Poziom: ")}{slotInfo.level} | e⁻: {Number(slotInfo.electrons).toExponential(3)}</span>
                                     )}
                                 </div>
                                 <div className="flex gap-1.5 justify-end">
@@ -3886,7 +4002,7 @@ export const GameCanvas = () => {
                             </div>
                             {!slotInfo.empty && slotInfo.unlockedAtoms && slotInfo.unlockedAtoms.length > 0 && (
                                 <div className="text-[9px] text-slate-400 mt-1 pb-1 pt-1 border-t border-slate-700/50">
-                                    <span className="font-bold text-slate-300">Dostępne atomy:</span> {slotInfo.unlockedAtoms.join(', ')}
+                                    <span className="font-bold text-slate-300">{tx("Dostępne atomy:")}</span> {slotInfo.unlockedAtoms.join(', ')}
                                 </div>
                             )}
                         </div>
@@ -3896,7 +4012,7 @@ export const GameCanvas = () => {
                 {deleteSaveConfirm !== null && (
                     <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-[130] p-4 rounded-2xl">
                         <div className="bg-slate-900 border border-slate-700 p-6 rounded-xl max-w-sm w-full flex flex-col items-center">
-                            <h3 className="text-white text-lg font-bold mb-2">Usuń Zapis</h3>
+                            <h3 className="text-white text-lg font-bold mb-2">{tx("")} Zapis</h3>
                             <p className="text-slate-400 text-sm mb-6 text-center">Czy na pewno chcesz bezpowrotnie usunąć zapis ze slotu {deleteSaveConfirm}?</p>
                             <div className="flex gap-4 w-full">
                                 <button 
@@ -3915,7 +4031,7 @@ export const GameCanvas = () => {
                                         setDeleteSaveConfirm(null);
                                         setTriggerRender(r => r + 1);
                                     }}
-                                >Usuń</button>
+                                >{tx("")}</button>
                             </div>
                         </div>
                     </div>
@@ -3938,14 +4054,14 @@ export const GameCanvas = () => {
       )}
 
       {showingStats && engineRef.current && (
-         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-4">
+         <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-4">
              <div className="bg-white/5 border border-white/10 w-full max-w-2xl rounded-3xl p-8 relative shadow-2xl maxHeight-[90vh] overflow-y-auto">
                 <button 
                   className="absolute top-6 right-6 text-2xl hover:scale-110 transition-transform"
                   onClick={() => { if(engineRef.current) engineRef.current.state.showingStats = false; }}>
                   ❌
                 </button>
-                <h2 className="text-3xl font-black tracking-tight mb-8 text-blue-300 border-b border-blue-900 pb-4">📊 Statystyki Wiązań</h2>
+                <h2 className="text-3xl font-black tracking-tight mb-8 text-blue-300 border-b border-blue-900 pb-4">{tx("📊 Statystyki")} Wiązań</h2>
                 
                 <div className="grid grid-cols-1 gap-4">
                     {['ch4', 'nh3', 'h2o', 'co2', 'no2', 'h2s', 'so2', 'h2so4', 'sio2', 'sic'].map(id => {
@@ -4209,14 +4325,14 @@ export const GameCanvas = () => {
       )}
 
       {showingRecipeBook && engineRef.current && (
-         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-4">
+         <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-4">
              <div className="bg-white/5 border border-white/10 w-full max-w-3xl rounded-3xl p-8 relative shadow-2xl overflow-y-auto" style={{ maxHeight: '90vh' }}>
                 <button 
                   className="absolute top-6 right-6 text-2xl hover:scale-110 transition-transform"
                   onClick={() => { if(engineRef.current) engineRef.current.state.showingRecipeBook = false; }}>
                   ❌
                 </button>
-                <h2 className="text-3xl font-black tracking-tight mb-8 text-indigo-300 border-b border-indigo-900 pb-4">📖 Księga Wiązań</h2>
+                <h2 className="text-3xl font-black tracking-tight mb-8 text-indigo-300 border-b border-indigo-900 pb-4">{tx("")}</h2>
                 
                 <div className="flex flex-col gap-10">
                     {Object.entries(
@@ -4229,7 +4345,7 @@ export const GameCanvas = () => {
                     ).map(([cat, rxList]) => (
                         <div key={cat} className="animate-fade-in">
                             <h3 className="text-xl font-bold text-slate-300 border-b border-indigo-900/50 pb-2 mb-4 pl-2 uppercase tracking-widest whitespace-nowrap overflow-hidden text-ellipsis">{cat}</h3>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className={`grid grid-cols-1 gap-6 ${engineRef.current!.state.unlockedCharacters.includes('mendelejew') ? 'lg:grid-cols-3 md:grid-cols-2' : 'md:grid-cols-2'}`}>
                                 {rxList.map(rx => {
                                     const unlocked = engineRef.current!.state.unlockedReactions.includes(rx.id);
                                     
@@ -4259,7 +4375,7 @@ export const GameCanvas = () => {
       )}
 
       {engineRef.current && engineRef.current.state.showingMercenary && (
-         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-4">
+         <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-4">
              <div className="bg-green-950/90 border border-green-500/30 w-full max-w-2xl rounded-3xl p-8 relative shadow-[0_0_50px_rgba(34,197,94,0.2)] maxHeight-[90vh] overflow-y-auto">
                 <button 
                   className="absolute top-6 right-6 text-2xl hover:scale-110 transition-transform text-green-300"
@@ -4271,16 +4387,16 @@ export const GameCanvas = () => {
                     <p className="text-green-200/70 font-medium tracking-wide">Wynajmij kociego najemnika by pomógł ci do końca tego piętra. (Znika po pokonaniu bossa!)</p>
                     <div className="flex justify-between items-center w-full mt-6 bg-black/40 p-4 rounded-xl border border-green-900">
                         <span className="font-bold text-lg text-slate-300">Koszt najmu w elektronach:</span>
-                        <span className="text-2xl font-black text-yellow-400">500 e⁻ x Wynajęty Poziom</span>
+                        <span className="text-2xl font-black text-yellow-400">{tx("500 e⁻ x Wynajęty Poziom")}</span>
                     </div>
                 </div>
 
                 <div className="grid grid-cols-1 gap-4">
                     {[
                         { id: 'ginger_cat', name: 'Rudy Najemnik', emoji: '😾', element: 'C', cost: 500 * (engineRef.current.state.level || 1) },
-                        { id: 'black_cat', name: 'Czarny Najemnik', emoji: '🐈‍⬛', element: 'H', cost: 600 * (engineRef.current.state.level || 1) },
+                        { id: 'black_cat', name: 'Avo-Gatto Najemnik', emoji: '🐈‍⬛', element: 'H', cost: 600 * (engineRef.current.state.level || 1) },
                         { id: 'bohr_cat', name: 'Bohr Najemnik', emoji: '😼', element: 'N', cost: 800 * (engineRef.current.state.level || 1) },
-                        { id: 'curie_cat', name: 'Curie Najemnik', emoji: '😻', element: 'O', cost: 1000 * (engineRef.current.state.level || 1) },
+                        { id: 'curie_cat', name: 'Curie Najemnik', emoji: '😻', element: 'Ra', cost: 1000 * (engineRef.current.state.level || 1) },
                         { id: 'schrodinger_cat', name: 'Schrodinger Najemnik', emoji: '🙀', element: 'S', cost: 1200 * (engineRef.current.state.level || 1) }
                     ].filter(merc => merc.id !== engineRef.current?.state.selectedCharacter).map(merc => {
                         const isCurrent = engineRef.current?.state.companion === merc.id;
@@ -4332,7 +4448,7 @@ export const GameCanvas = () => {
       )}
 
       {engineRef.current && engineRef.current.state.showingWorkshop && (
-         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-4">
+         <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-4">
              <div className="bg-slate-900/90 border border-indigo-500/30 w-full max-w-2xl rounded-3xl p-8 relative shadow-[0_0_50px_rgba(79,70,229,0.2)] maxHeight-[90vh] overflow-y-auto">
                 <button 
                   className="absolute top-6 right-6 text-2xl hover:scale-110 transition-transform text-indigo-300"
@@ -4355,7 +4471,7 @@ export const GameCanvas = () => {
                         <div className="absolute inset-0 bg-gradient-to-b from-blue-500/5 to-transparent pointer-events-none"></div>
                         <span className="text-4xl mb-3">🛡️</span>
                         <h3 className="text-xl font-bold text-blue-300 mb-1">Pancerz Skafandra</h3>
-                        <p className="text-xs text-slate-400 mb-4 h-12">Zmniejsza otrzymywane obrażenia. Max {engineRef.current!.state.selectedCharacter === 'bohr_cat' ? '40' : '30'}% redukcji na poziomie 3.</p>
+                        <p className="text-xs text-slate-400 mb-4 h-12">Zmniejsza otrzymywane obrażenia. {engineRef.current!.state.selectedCharacter === "bohr_cat" ? tx("Zmniejsza otrzymywane obrażenia. Max 40% redukcji na poziomie 3.") : tx("Zmniejsza otrzymywane obrażenia. Max 30% redukcji na poziomie 3.")}</p>
                         
                         <div className="flex gap-2 mb-6 w-full justify-center">
                             {[1, 2, 3].map(level => (
@@ -4371,7 +4487,7 @@ export const GameCanvas = () => {
                         {(() => {
                             const currentLevel = engineRef.current!.state.armorLevel;
                             if (currentLevel >= 3) {
-                                return <button disabled className="w-full py-3 rounded-xl bg-slate-800 text-slate-500 font-bold tracking-widest cursor-not-allowed">MAX POZIOM</button>;
+                                return <button disabled className="w-full py-3 rounded-xl bg-slate-800 text-slate-500 font-bold tracking-widest cursor-not-allowed">{tx("MAX POZIOM")}</button>;
                             }
                             const cost = currentLevel === 0 ? 1 : currentLevel === 1 ? 3 : 5;
                             const canAfford = engineRef.current!.state.protons >= cost;
@@ -4393,6 +4509,46 @@ export const GameCanvas = () => {
                         })()}
                     </div>
 
+                    {/* SuperWeapon Unlock Upgrade */}
+                    {engineRef.current!.state.unlockedCharacters.includes('mendelejew') && (
+                        <div className="bg-black/40 border border-slate-700/50 rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden group">
+                            <div className="absolute inset-0 bg-gradient-to-b from-purple-500/5 to-transparent pointer-events-none"></div>
+                            <span className="text-4xl mb-3">⚛️</span>
+                            <h3 className="text-xl font-bold text-purple-300 mb-1">Moduł Reakcji (Pasyw)</h3>
+                            <p className="text-xs text-slate-400 mb-4 h-12">Trwale odblokowuje wybór związków chemicznych (Super Broń) od początku gry.</p>
+                            
+                            <div className="flex gap-2 mb-6">
+                                <div className={`w-8 h-8 rounded-full border-2 flex items-center justify-center font-bold text-xs ${engineRef.current!.state.hasSuperWeapon ? 'bg-purple-500 border-purple-400 text-white shadow-[0_0_10px_rgba(168,85,247,0.8)]' : 'bg-transparent border-slate-600 text-slate-600'}`}>
+                                    {engineRef.current!.state.hasSuperWeapon ? '✓' : '1'}
+                                </div>
+                            </div>
+                            
+                            {(() => {
+                                const isPurchased = engineRef.current!.state.hasSuperWeapon;
+                                if (isPurchased) {
+                                    return <button disabled className="w-full py-3 rounded-xl bg-slate-800 text-slate-500 font-bold tracking-widest cursor-not-allowed">{tx("POSIADANE")}</button>;
+                                }
+                                const cost = 100;
+                                const canAfford = engineRef.current!.state.protons >= cost;
+                                return (
+                                    <button 
+                                        onClick={() => {
+                                            if (canAfford) {
+                                                engineRef.current!.state.protons -= cost;
+                                                engineRef.current!.state.hasSuperWeapon = true;
+                                                engineRef.current!.saveGame();
+                                                setTriggerRender(r => r+1);
+                                            }
+                                        }}
+                                        className={`w-full py-3 rounded-xl font-bold tracking-widest transition-all ${canAfford ? 'bg-purple-600 hover:bg-purple-500 text-white shadow-[0_0_15px_rgba(168,85,247,0.4)]' : 'bg-slate-800 text-slate-500 cursor-not-allowed'}`}
+                                    >
+                                        ULEPSZ ({cost} p⁺)
+                                    </button>
+                                );
+                            })()}
+                        </div>
+                    )}
+                    
                     {/* Heat Upgrade */}
                     <div className="bg-black/40 border border-slate-700/50 rounded-2xl p-6 flex flex-col items-center text-center relative overflow-hidden group">
                         <div className="absolute inset-0 bg-gradient-to-b from-orange-500/5 to-transparent pointer-events-none"></div>
@@ -4411,7 +4567,7 @@ export const GameCanvas = () => {
                         {(() => {
                             const currentLevel = engineRef.current!.state.heatLevel;
                             if (currentLevel >= 3) {
-                                return <button disabled className="w-full py-3 rounded-xl bg-slate-800 text-slate-500 font-bold tracking-widest cursor-not-allowed">MAX POZIOM</button>;
+                                return <button disabled className="w-full py-3 rounded-xl bg-slate-800 text-slate-500 font-bold tracking-widest cursor-not-allowed">{tx("MAX POZIOM")}</button>;
                             }
                             const cost = currentLevel === 0 ? 1 : currentLevel === 1 ? 3 : 5;
                             const canAfford = engineRef.current!.state.protons >= cost;
@@ -4438,7 +4594,7 @@ export const GameCanvas = () => {
       )}
 
       {engineRef.current && engineRef.current.state.showingShop && (
-         <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-2 md:p-4">
+         <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-[100] backdrop-blur-xl p-2 md:p-4">
              <div className="bg-slate-900/90 border border-green-500/30 w-full max-w-lg rounded-2xl p-4 md:p-6 relative shadow-[0_0_50px_rgba(34,197,94,0.1)] max-h-[90vh] overflow-y-auto">
                 <button 
                   className="absolute top-4 right-4 text-2xl hover:scale-110 transition-transform"
@@ -4515,7 +4671,7 @@ export const GameCanvas = () => {
 
                      {engineRef.current.state.shopTab === 'potions' && [
                         { id: 'heal', name: 'Mała Lecząca Potka', cost: Math.floor(25 * Math.pow(1.3, engineRef.current.state.healPotionPurchases)), count: engineRef.current.state.potions.heal, desc: 'Natychmiastowo leczy 30% maksymalnego życia.', action: () => { if(engineRef.current) { engineRef.current.state.potions.heal += 1; engineRef.current.state.healPotionPurchases += 1; } }, use: () => { if(engineRef.current) { engineRef.current.state.keys['z'] = true; } } },
-                        { id: 'shield', name: 'Generator Tarczy', cost: Math.floor(80 * Math.pow(1.3, engineRef.current.state.shieldPotionPurchases)), count: engineRef.current.state.potions.shield, desc: 'Tworzy tymczasową barierę absorbującą 50 obrażeń.', action: () => { if(engineRef.current) { engineRef.current.state.potions.shield += 1; engineRef.current.state.shieldPotionPurchases += 1; } }, use: () => { if(engineRef.current) { engineRef.current.state.keys['x'] = true; } } },
+                        { id: 'shield', name: 'Generator Tarczy', cost: Math.floor(80 * Math.pow(1.3, engineRef.current.state.shieldPotionPurchases)), count: engineRef.current.state.potions.shield, desc: tx("Tworzy tymczasową barierę absorbującą 50 obrażeń."), action: () => { if(engineRef.current) { engineRef.current.state.potions.shield += 1; engineRef.current.state.shieldPotionPurchases += 1; } }, use: () => { if(engineRef.current) { engineRef.current.state.keys['x'] = true; } } },
                         { id: 'stamina', name: 'Eliksir Furii', cost: Math.floor(25 * Math.pow(1.3, engineRef.current.state.staminaPotionPurchases)), count: engineRef.current.state.potions.stamina, desc: `Przyspiesza regenerację staminy i zwiększa wydajność na kilka sekund.`, action: () => { if(engineRef.current) { engineRef.current.state.potions.stamina += 1; engineRef.current.state.staminaPotionPurchases += 1; } }, use: () => { if(engineRef.current) { engineRef.current.state.keys['c'] = true; } } },
                     ].map((item: any) => {
                         item.cost = Math.floor(item.cost * (engineRef.current!.state.market.inflationMultiplier || 1.0));
@@ -4576,16 +4732,16 @@ export const GameCanvas = () => {
                         <div className="bg-red-950/50 border border-red-500/30 p-4 rounded-xl flex items-center gap-3 text-red-200 mb-2">
                             <span className="text-2xl animate-bounce">🚨</span>
                             <div className="text-xs">
-                                <p className="font-extrabold text-red-400 uppercase tracking-widest">Genetyka i modyfikacje DNA kota są NIELEGALNE we wszechświecie Mendelejewa!</p>
-                                <p className="opacity-90">Modyfikowanie statsów leży poza kocim prawem. Urząd Skarbowy <span className="underline font-bold">KATEGORYCZNIE ODRZUCA</span> te ulepszenia. <span className="text-yellow-400 font-bold">NIE OTRZYMASZ faktury VAT nor odpisów od podatków za to!</span></p>
+                                <p className="font-extrabold text-red-400 uppercase tracking-widest">{tx("")}</p>
+                                <p className="opacity-90">{tx("")}<span className="underline font-bold">{tx("")}</span>{tx("")}<span className="text-yellow-400 font-bold">{tx("")}</span></p>
                             </div>
                         </div>
                     )}
 
                     {engineRef.current.state.shopTab === 'stats' && [
-                        { id: 'hp', name: 'Wzrost Max Życia', cost: Math.floor(50 * Math.pow(1.3, engineRef.current.state.maxHpLevel)), count: engineRef.current.state.maxHpLevel, desc: 'Zwiększa maksymalne punkty życia o +5%.', action: () => { if(engineRef.current) engineRef.current.state.maxHpLevel += 1; } },
-                        { id: 'regen', name: 'Powolna Regeneracja', cost: Math.floor(150 * Math.pow(1.3, engineRef.current.state.regenLevel)), count: engineRef.current.state.regenLevel, desc: 'Automatycznie odnawia zdrowie o 0.25 HP na sekundę za każdy poziom.', action: () => { if(engineRef.current) engineRef.current.state.regenLevel += 1; } },
-                        { id: 'speed', name: 'Szybkość Poruszania', cost: Math.floor(100 * Math.pow(1.3, engineRef.current.state.speedLevel)), count: engineRef.current.state.speedLevel, desc: 'Zwiększa podstawową szybkość i zasięg dasha.', action: () => { if(engineRef.current) engineRef.current.state.speedLevel += 1; } },
+                        { id: 'hp', name: tx("Wzrost Max Życia"), cost: Math.floor(50 * Math.pow(1.3, engineRef.current.state.maxHpLevel)), count: engineRef.current.state.maxHpLevel, desc: tx("Zwiększa maksymalne punkty życia o +5%."), action: () => { if(engineRef.current) engineRef.current.state.maxHpLevel += 1; } },
+                        { id: 'regen', name: tx("Powolna Regeneracja"), cost: Math.floor(150 * Math.pow(1.3, engineRef.current.state.regenLevel)), count: engineRef.current.state.regenLevel, desc: tx("Automatycznie odnawia zdrowie o 0.25 HP na sekundę za każdy poziom."), action: () => { if(engineRef.current) engineRef.current.state.regenLevel += 1; } },
+                        { id: 'speed', name: tx("Szybkość Poruszania"), cost: Math.floor(100 * Math.pow(1.3, engineRef.current.state.speedLevel)), count: engineRef.current.state.speedLevel, desc: tx("Zwiększa podstawową szybkość i zasięg dasha."), action: () => { if(engineRef.current) engineRef.current.state.speedLevel += 1; } },
 
                     ].map((item: any) => {
                         item.cost = Math.floor(item.cost * (engineRef.current!.state.market.inflationMultiplier || 1.0));
@@ -4593,7 +4749,7 @@ export const GameCanvas = () => {
                         <div key={item.id} className="bg-white/5 border border-white/10 rounded-xl p-4 md:p-6 flex flex-col justify-between w-full">
                             <div className="flex justify-between items-start mb-2">
                                 <h3 className="font-bold text-lg md:text-xl text-white">{item.name}</h3>
-                                <span className="bg-black/60 px-3 py-1 rounded-full text-xs font-black text-amber-400 border border-amber-500/30 whitespace-nowrap ml-2">Poziom: {item.count}</span>
+                                <span className="bg-black/60 px-3 py-1 rounded-full text-xs font-black text-amber-400 border border-amber-500/30 whitespace-nowrap ml-2">{tx("Poziom: ")}{item.count}</span>
                             </div>
                             <p className="text-sm text-slate-400 mb-4">{item.desc}</p>
                             <button 
@@ -4625,13 +4781,13 @@ export const GameCanvas = () => {
       )}
 
       {engineRef.current?.state?.arrestedDeath && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/95 text-slate-100 z-[200] backdrop-blur-3xl p-4">
+          <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-black/95 text-slate-100 z-[200] backdrop-blur-3xl p-4">
               <div className="bg-red-950/40 border border-red-500/50 w-full max-w-sm rounded-2xl p-5 relative shadow-[0_0_30px_rgba(239,68,68,0.4)] text-center animate-pulse">
                   <span className="text-4xl max-w-full block mb-2">👮🚓🐱🥖</span>
                   <h2 className="text-2xl font-black tracking-tight text-red-500 uppercase mb-2">🚨 ARESZTOWANIE! 🚨</h2>
-                  <p className="text-base font-bold text-red-300 mb-1">URZĄD SKARBOWY GŁÓWNEJ CYTADELI</p>
+                  <p className="text-base font-bold text-red-300 mb-1">{tx("")}</p>
                   <p className="text-xs text-slate-300 mb-4 leading-relaxed">
-                      Zostałeś aresztowany za <span className="text-red-400 font-extrabold underline">PRZEKRĘTY I OSZUSTWA FINANSOWE!</span> 
+                      {tx("")}<span className="text-red-400 font-extrabold underline">{tx("")}</span> 
                       <br /><br />
                       Unikanie podatków we wszechświecie Mendelejewa skończyło się nalotem policjantów.
                   </p>
@@ -4651,7 +4807,7 @@ export const GameCanvas = () => {
                                     st.taxEntries = [];
                                     st.unpaidTax = 0;
                                     st.roomsSinceTaxOwed = 0;
-                                    engineRef.current.addLog(`💼 Wręczyłeś łapówkę (${bribeCost} e⁻). Policja odjechała.`);
+                                    engineRef.current.addLog(`💼 ${tx(" Wręczyłeś łapówkę (")}${bribeCost}${tx(" e⁻). Policja odjechała.")}`);
                                 }
                             }
                             setTriggerRender(r => r + 1);
@@ -4674,7 +4830,7 @@ export const GameCanvas = () => {
                                 st.taxEntries = [];
                                 st.unpaidTax = 0;
                                 st.roomsSinceTaxOwed = 0;
-                                engineRef.current.addLog(`📜 Zgłoszono niewypłacalność. Tracisz wszystkie elektrony, ale odzyskujesz wolność.`);
+                                engineRef.current.addLog(`📜 ${tx(" Zgłoszono niewypłacalność. Tracisz wszystkie elektrony, ale odzyskujesz wolność.")}`);
                             }
                             setTriggerRender(r => r + 1);
                         }}
@@ -4698,7 +4854,7 @@ export const GameCanvas = () => {
       )}
 
       {gameStateUi === 'menu' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-50 backdrop-blur-md p-3 md:p-6 overflow-y-auto">
+        <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-50 backdrop-blur-md p-3 md:p-6 overflow-y-auto">
           <div className="flex flex-col md:flex-row gap-4 md:gap-8 items-center justify-center max-w-4xl w-full">
              {/* Left side: Main Title & Play Button */}
              <div className="flex flex-col items-center md:items-start text-center md:text-left md:w-1/2">
@@ -4865,12 +5021,12 @@ export const GameCanvas = () => {
 
              {/* Right side: Mock Gameplay Simulation */}
              <div className="bg-white/5 backdrop-blur-md p-3 md:p-5 rounded-2xl text-left border border-white/10 shadow-2xl md:w-1/2 max-w-sm flex flex-col gap-3">
-               <h2 className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-indigo-400 mb-1 border-b border-indigo-500/20 pb-1">{tx("Budowa Atomu")} (kliknij by zobaczyć)</h2>
+               <h2 className="text-[10px] md:text-xs font-bold uppercase tracking-widest text-indigo-400 mb-1 border-b border-indigo-500/20 pb-1">{tx("Budowa Atomu")} {tx("(kliknij by zobaczyć)")}</h2>
                <div className="cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-transform" onClick={() => setShowingPeriodicTable(true)}>
-                   <MenuGameplay selectedZ={menuSelectedZ} />
+                   <MenuGameplay selectedZ={menuSelectedZ} language={engineRef.current?.state.language || 'pl'} />
                </div>
                <p className="text-[8px] md:text-[9px] text-indigo-300/40 italic mt-auto border-t border-indigo-500/10 pt-1">
-                 {tx("Możesz grać na telefonie instalując stronę jako aplikację (PWA) przez menu Chrome!")}
+                 {tx("")}
                </p>
              </div>
           </div>
@@ -4879,18 +5035,94 @@ export const GameCanvas = () => {
 
 
 
+      
+      {/* Tutorial modal - disabled from auto-popup to prevent blocking gameplay on load */}
+      {false && engineRef.current && !engineRef.current.state.hasSeenTutorial && gameStateUi === 'playing' && (
+        <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/90 text-slate-100 z-[100] backdrop-blur-xl animate-in fade-in zoom-in duration-300 p-2 sm:p-4 overflow-y-auto">
+          <div className="relative my-auto w-full max-w-2xl max-h-[92vh] flex flex-col bg-slate-900/95 border-2 border-indigo-500 rounded-2xl sm:rounded-3xl p-3 sm:p-6 md:p-7 shadow-[0_0_50px_rgba(79,70,229,0.4)]">
+            <button 
+                onClick={() => {
+                    if (engineRef.current) {
+                        engineRef.current.state.hasSeenTutorial = true;
+                        engineRef.current.saveGame();
+                        setTriggerRender(r => r + 1);
+                    }
+                }}
+                className="absolute top-2 right-2 sm:top-4 sm:right-4 w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 active:scale-90 flex items-center justify-center text-slate-300 hover:text-white transition-all text-sm font-bold z-10"
+                title="Zamknij"
+            >
+                ✕
+            </button>
+
+            <h2 className="text-lg sm:text-2xl md:text-3xl font-black text-indigo-400 mb-2 sm:mb-4 tracking-tight text-center pr-6">
+                Witaj w Hacker Merge! 🎮
+            </h2>
+            
+            <div className="overflow-y-auto flex-1 pr-1 space-y-2 sm:space-y-3">
+                <div className="grid grid-cols-2 gap-2 sm:gap-3">
+                    <div className="bg-black/50 p-2 sm:p-3 rounded-xl border border-indigo-500/30 flex items-center gap-2 sm:gap-3">
+                        <div className="text-2xl sm:text-3xl shrink-0">🕹️</div>
+                        <div className="min-w-0">
+                            <strong className="text-white block text-xs sm:text-sm font-bold truncate">Ruch postacią</strong>
+                            <span className="text-[10px] sm:text-xs text-slate-400 block leading-tight">Joystick na ekranie lub klawisze W, A, S, D</span>
+                        </div>
+                    </div>
+                    <div className="bg-black/50 p-2 sm:p-3 rounded-xl border border-indigo-500/30 flex items-center gap-2 sm:gap-3">
+                        <div className="text-2xl sm:text-3xl shrink-0">🎯</div>
+                        <div className="min-w-0">
+                            <strong className="text-white block text-xs sm:text-sm font-bold truncate">Cel i Strzał</strong>
+                            <span className="text-[10px] sm:text-xs text-slate-400 block leading-tight">Dotknij/przeciągnij lub myszka (LPM)</span>
+                        </div>
+                    </div>
+                    <div className="bg-black/50 p-2 sm:p-3 rounded-xl border border-indigo-500/30 flex items-center gap-2 sm:gap-3">
+                        <div className="text-2xl sm:text-3xl shrink-0">❄️</div>
+                        <div className="min-w-0">
+                            <strong className="text-white block text-xs sm:text-sm font-bold truncate">Przegrzewanie (Heat)</strong>
+                            <span className="text-[10px] sm:text-xs text-slate-400 block leading-tight">Uważaj na pasek przegrzania broni pod postacią</span>
+                        </div>
+                    </div>
+                    <div className="bg-black/50 p-2 sm:p-3 rounded-xl border border-indigo-500/30 flex items-center gap-2 sm:gap-3">
+                        <div className="text-2xl sm:text-3xl shrink-0">⚛️</div>
+                        <div className="min-w-0">
+                            <strong className="text-white block text-xs sm:text-sm font-bold truncate">Super Broń</strong>
+                            <span className="text-[10px] sm:text-xs text-slate-400 block leading-tight">Księga Reakcji, twórz związki i strzelaj (Q / ikona)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div className="bg-indigo-900/40 p-2 sm:p-2.5 rounded-xl border border-indigo-500/40 text-center text-[10px] sm:text-xs text-indigo-200 leading-snug">
+                    Pauzuj (przycisk menu lub klawisz ESC), aby otworzyć Opcje, Księgę Związków lub Sklep!
+                </div>
+            </div>
+
+            <button 
+                onClick={() => {
+                    if (engineRef.current) {
+                        engineRef.current.state.hasSeenTutorial = true;
+                        engineRef.current.saveGame();
+                        setTriggerRender(r => r + 1);
+                    }
+                }}
+                className="w-full bg-indigo-600 hover:bg-indigo-500 active:scale-95 text-white font-black py-2.5 sm:py-3.5 rounded-xl transition-all shadow-[0_0_20px_rgba(79,70,229,0.5)] text-xs sm:text-base mt-2 sm:mt-3 shrink-0"
+            >
+                ZROZUMIAŁEM, GRAMY! 🔥
+            </button>
+          </div>
+        </div>
+      )}
+
       {gameStateUi === 'proton_tutorial' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/90 text-slate-100 z-50 backdrop-blur-xl animate-in fade-in zoom-in duration-500">
+        <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/90 text-slate-100 z-50 backdrop-blur-xl animate-in fade-in zoom-in duration-500">
           <div className="text-[120px] mb-4 animate-bounce drop-shadow-[0_0_30px_rgba(234,179,8,0.8)]">💥</div>
           <h1 className="text-6xl font-black text-yellow-400 tracking-tighter drop-shadow-[0_0_20px_rgba(234,179,8,0.6)] mb-4 text-center">
             ZDOBYTO PROTON!
           </h1>
           <p className="text-xl mb-4 text-slate-300 max-w-xl text-center leading-relaxed">
-            Pokonałeś Bossa i zdobyłeś swój pierwszy <span className="text-yellow-400 font-bold">Proton</span>!
+            {tx("")}<span className="text-yellow-400 font-bold">{tx("Proton")}</span>!
           </p>
           <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8 max-w-2xl text-center">
             <p className="text-slate-400 mb-2">
-              Protony to <strong className="text-white">jedyna waluta, która zostaje z Tobą po śmierci</strong>. 
+              Protony to <strong className="text-white">{tx("")}</strong>. 
             </p>
             <p className="text-slate-400">
               Możesz za nie permanentnie odblokować nowe postaci (np. Czarnego Kota ze strzelbą) w warsztacie (tym jasnym kółku w Lobby).
@@ -4910,9 +5142,9 @@ export const GameCanvas = () => {
       )}
 
       {devPasswordPrompt && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50 p-4">
+        <div className="absolute inset-0 flex items-center justify-center bg-black/80 z-50 p-4 pointer-events-auto">
             <div className="bg-slate-900 border border-slate-700 p-8 rounded-xl max-w-sm w-full flex flex-col items-center">
-                <h3 className="text-white text-xl font-bold mb-4 font-mono">Wpisz hasło</h3>
+                <h3 className="text-white text-xl font-bold mb-4 font-mono">{tx("")}</h3>
                 <input 
                    autoFocus
                    type="password"
@@ -4993,7 +5225,7 @@ export const GameCanvas = () => {
                     </div>
 
                     <div className="bg-white/5 p-2 rounded-lg border border-white/5 flex items-center justify-between">
-                        <span className="text-slate-300 font-bold">Nieśmiertelność</span>
+                        <span className="text-slate-300 font-bold">{tx("")}</span>
                         <button 
                             onClick={() => { if(engineRef.current) { engineRef.current.state.devGodMode = !engineRef.current.state.devGodMode; setTriggerRender(r=>r+1); } }} 
                             className={`px-2.5 py-0.5 rounded text-[10px] font-bold transition-all ${engineRef.current?.state.devGodMode ? 'bg-green-500 text-white' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'}`}
@@ -5003,7 +5235,7 @@ export const GameCanvas = () => {
                     </div>
 
                     <div className="bg-white/5 p-2 rounded-lg border border-white/5 flex flex-col gap-1.5">
-                        <span className="text-slate-300 font-bold mb-1">Przywołaj Najemnika</span>
+                        <span className="text-slate-300 font-bold mb-1">{tx("")}</span>
                         <div className="flex flex-wrap gap-1">
                             {[
                                 { id: 'ginger_cat', name: 'Rudy' },
@@ -5081,12 +5313,12 @@ export const GameCanvas = () => {
                         </button>
                         {showingDevBossTests && (
                             <div className="grid grid-cols-2 gap-1 mt-1">
-                                <button onClick={() => { engineRef.current?.devSpawnBoss('Celery'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="bg-green-700 hover:bg-green-600 text-[10px] py-1 rounded text-white font-bold">Poziom 1 (Seler)</button>
-                                <button onClick={() => { engineRef.current?.devSpawnBoss('SnakeGourdHead'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="bg-lime-700 hover:bg-lime-600 text-[10px] py-1 rounded text-white font-bold">Poziom 2 (Tykwa)</button>
-                                <button onClick={() => { engineRef.current?.devSpawnBoss('Hogweed'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="bg-emerald-700 hover:bg-emerald-600 text-[10px] py-1 rounded text-white font-bold">Poziom 2 (Barszcz)</button>
-                                <button onClick={() => { engineRef.current?.devSpawnBoss('Durian'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="bg-yellow-600 hover:bg-yellow-500 text-[10px] py-1 rounded text-white font-bold">Poziom 3 (Durian)</button>
-                                <button onClick={() => { engineRef.current?.devSpawnBoss('GiantTree'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="col-span-2 bg-stone-700 hover:bg-stone-600 text-[10px] py-1 rounded text-white font-bold">Poziom 3 (Pradawny Dąb)</button>
-                                <button onClick={() => { engineRef.current?.devSpawnBoss('Patozwiazek'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="col-span-2 bg-fuchsia-700 hover:bg-fuchsia-600 text-[10px] py-1 rounded text-white font-bold">Poziom 4+ (Patozwiązek)</button>
+                                <button onClick={() => { engineRef.current?.devSpawnBoss('Celery'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="bg-green-700 hover:bg-green-600 text-[10px] py-1 rounded text-white font-bold">{tx("Poziom ")}1 (Seler)</button>
+                                <button onClick={() => { engineRef.current?.devSpawnBoss('SnakeGourdHead'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="bg-lime-700 hover:bg-lime-600 text-[10px] py-1 rounded text-white font-bold">{tx("Poziom ")}2 (Tykwa)</button>
+                                <button onClick={() => { engineRef.current?.devSpawnBoss('Hogweed'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="bg-emerald-700 hover:bg-emerald-600 text-[10px] py-1 rounded text-white font-bold">{tx("Poziom ")}2 (Barszcz)</button>
+                                <button onClick={() => { engineRef.current?.devSpawnBoss('Durian'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="bg-yellow-600 hover:bg-yellow-500 text-[10px] py-1 rounded text-white font-bold">{tx("Poziom ")}3 (Durian)</button>
+                                <button onClick={() => { engineRef.current?.devSpawnBoss('GiantTree'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="col-span-2 bg-stone-700 hover:bg-stone-600 text-[10px] py-1 rounded text-white font-bold">{tx("")}</button>
+                                <button onClick={() => { engineRef.current?.devSpawnBoss('Patozwiazek'); setShowingDevMenu(false); setShowingDevBossTests(false); if(engineRef.current) engineRef.current.state.devPaused=false; }} className="col-span-2 bg-fuchsia-700 hover:bg-fuchsia-600 text-[10px] py-1 rounded text-white font-bold">{tx("")}</button>
                             </div>
                         )}
                     </div>
@@ -5114,7 +5346,7 @@ export const GameCanvas = () => {
                                     }
                                     engineRef.current.state.taxEntries.push({
                                         id: 'dev_test_' + Date.now(),
-                                        description: 'Podatek Beli Słomy (Fiskalny Test Deweloperski)',
+                                        description: tx("Podatek Beli Słomy (Fiskalny Test Deweloperski)"),
                                         incomeAmount: 500,
                                         taxAmount: 150,
                                         roomsSinceTaxOwed: 10,
@@ -5124,7 +5356,7 @@ export const GameCanvas = () => {
                                     engineRef.current.state.unpaidTax = engineRef.current.state.taxEntries
                                         .filter((e: any) => !e.paid)
                                         .reduce((sum: number, e: any) => sum + e.taxAmount, 0);
-                                    engineRef.current.addLog("🚨 URZĄD SKARBOWY WYSYŁA KOTY POLICJANTÓW NA BAGIETKACH! 🚨");
+                                    engineRef.current.addLog(tx("🚨 URZĄD SKARBOWY WYSYŁA KOTY POLICJANTÓW NA BAGIETKACH! 🚨"));
                                     setShowingDevMenu(false);
                                 } 
                             }} 
@@ -5155,44 +5387,43 @@ export const GameCanvas = () => {
       )}
 
       {showingPeriodicTable && (
-        <div className="absolute inset-0 z-[150] flex flex-col bg-[#0a0a0f] text-slate-100">
+        <div className="absolute inset-0 z-[150] flex flex-col bg-[#0a0a0f] text-slate-100 pointer-events-auto">
             <div className="p-2 md:p-4 bg-slate-900 border-b border-slate-700 flex justify-between items-center">
                <h1 className="text-sm md:text-xl font-bold tracking-widest text-indigo-400 uppercase">
-                  {engineRef.current?.state.state === 'menu' ? 'Wybór Pierwiastka do Wizualizacji' : 'TABLICA MENDELEJEWA'}
+                  {engineRef.current?.state.state === 'menu' ? tx('Wybór Pierwiastka do Wizualizacji') : tx("TABLICA MENDELEJEWA")}
                </h1>
                <button 
                  className="bg-slate-700 hover:bg-red-600 px-3 md:px-4 py-1.5 md:py-2 text-xs md:text-base rounded font-bold"
                  onClick={() => setShowingPeriodicTable(false)}
                >
-                 Zamknij
+                 {tx("Zamknij")}
                </button>
             </div>
             <div className="flex-1 overflow-auto relative">
                 <PeriodicTable 
+                    language={engineRef.current?.state.language || 'pl'}
                     unlockedAtoms={engineRef.current?.state.state === 'lobby' ? (engineRef.current?.state.unlockedAlchemyAtoms || ['H']) : (engineRef.current?.state.unlockedAtoms || ['H'])}
                     isMenuMode={engineRef.current?.state.state === 'menu'}
                     onSelectAtom={(z) => {
                          if (engineRef.current?.state.state === 'menu') {
                              setMenuSelectedZ(z);
-                             setShowingPeriodicTable(false);
-                         } else {
-                             setSelectedAtomDetails(z);
                          }
+                         setSelectedAtomDetails(z);
                     }}
                 />
                 {selectedAtomDetails && (
                     <div className="absolute inset-0 bg-[#0a0a0f]/90 backdrop-blur-md flex items-center justify-center p-4 z-50">
                         <div className="bg-slate-900 border border-indigo-500/50 w-full max-w-4xl rounded-2xl overflow-hidden flex flex-col shadow-2xl maxHeight-[90vh]">
                             <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-indigo-950/20">
-                                <h3 className="text-xl font-bold text-white">Budowa i Wiązania: {PERIODIC_TABLE.find(x => x.z === selectedAtomDetails)?.name} ({PERIODIC_TABLE.find(x => x.z === selectedAtomDetails)?.symbol})</h3>
+                                <h3 className="text-xl font-bold text-white">{tx("Budowa i Wiązania:")} {tx(PERIODIC_TABLE.find(x => x.z === selectedAtomDetails)?.name || '')} ({PERIODIC_TABLE.find(x => x.z === selectedAtomDetails)?.symbol})</h3>
                                 <button onClick={() => setSelectedAtomDetails(null)} className="text-slate-400 hover:text-white text-xl">✖</button>
                             </div>
                             <div className="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col md:flex-row gap-6">
                                 <div className="md:w-1/2 flex flex-col relative min-h-[350px] border border-slate-700 rounded-xl overflow-hidden bg-black/50 pointer-events-none">
-                                    <MenuGameplay selectedZ={selectedAtomDetails} />
+                                    <MenuGameplay selectedZ={selectedAtomDetails} language={engineRef.current?.state.language || 'pl'} />
                                 </div>
                                 <div className="md:w-1/2 flex flex-col gap-4">
-                                    <h4 className="font-bold text-indigo-300 uppercase tracking-wider text-xs border-b border-indigo-900 pb-2">Możliwe Wiązania</h4>
+                                    <h4 className="font-bold text-indigo-300 uppercase tracking-wider text-xs border-b border-indigo-900 pb-2">{tx("Możliwe Wiązania")}</h4>
                                     <div className="flex flex-col gap-3 overflow-y-auto pr-2" style={{maxHeight:'50vh'}}>
                                         {REACTIONS_DB.filter(rx => rx.atoms.includes(PERIODIC_TABLE.find(x => x.z === selectedAtomDetails)?.symbol || '')).map(rx => {
                                             const isUnlockedMenuContext = engineRef.current?.state.state === 'menu' || engineRef.current?.state.state === 'lobby';
@@ -5204,25 +5435,24 @@ export const GameCanvas = () => {
                                                     </div>
                                                     <div className="flex flex-col relative z-10 w-full text-left">
                                                         <div className="text-[10px] font-black text-yellow-500">{isUnlocked ? rx.eq : '???'}</div>
-                                                        <div className="text-sm font-bold text-white leading-none">{isUnlocked ? rx.name : 'Zablokowane'}</div>
+                                                        <div className="text-sm font-bold text-white leading-none">{isUnlocked ? tx(rx.name) : tx("Zablokowane")}</div>
                                                     </div>
                                                 </button>
                                             )
                                         })}
                                         {REACTIONS_DB.filter(rx => rx.atoms.includes(PERIODIC_TABLE.find(x => x.z === selectedAtomDetails)?.symbol || '')).length === 0 && (
-                                            <div className="text-slate-500 text-sm italic py-4">Brak dostępnych wiązań dla tego pierwiastka w grze... jeszcze.</div>
+                                            <div className="text-slate-500 text-sm italic py-4">{tx("Brak dostępnych wiązań dla tego pierwiastka w grze... jeszcze.")}</div>
                                         )}
                                     </div>
                                 </div>
                             </div>
                         </div>
-
                         {selectedReactionDetails && (
                             <div className="absolute inset-0 bg-black/95 flex items-center justify-center p-4 z-[60] animate-in fade-in duration-200">
                                 <div className="bg-slate-900 border border-fuchsia-500/50 w-full max-w-2xl rounded-2xl overflow-hidden flex flex-col shadow-[0_0_50px_rgba(217,70,239,0.2)]">
                                     <div className="p-4 border-b border-slate-800 flex justify-between items-center bg-fuchsia-950/20">
                                         <h3 className="text-xl font-bold text-white flex gap-2 items-center">
-                                            Szczegóły Wiązania
+                                            {tx("Szczegóły Wiązania")}
                                         </h3>
                                         <button onClick={() => setSelectedReactionDetails(null)} className="text-slate-400 hover:text-white text-xl">✖</button>
                                     </div>
@@ -5232,23 +5462,21 @@ export const GameCanvas = () => {
                                         </div>
                                         <div className="flex flex-col gap-4 w-full">
                                             <div>
-                                                <h4 className="text-2xl font-black text-white">{REACTIONS_DB.find(r => r.id === selectedReactionDetails)?.name}</h4>
+                                                <h4 className="text-2xl font-black text-white">{tx(REACTIONS_DB.find(r => r.id === selectedReactionDetails)?.name || "")}</h4>
                                                 <div className="text-yellow-500 font-mono text-sm font-bold">{REACTIONS_DB.find(r => r.id === selectedReactionDetails)?.eq}</div>
                                             </div>
-                                            
                                             <div className="bg-fuchsia-900/20 border border-fuchsia-500/20 rounded-lg p-3 text-sm text-fuchsia-100">
-                                                <span className="font-bold text-fuchsia-300 block mb-1">Działanie (Superbroń):</span>
-                                                {REACTIONS_DB.find(r => r.id === selectedReactionDetails)?.desc}
+                                                <span className="font-bold text-fuchsia-300 block mb-1">{tx("Działanie (Superbroń):")}</span>
+                                                {tx(REACTIONS_DB.find(r => r.id === selectedReactionDetails)?.desc || "")}
                                             </div>
-
                                             {REACTIONS_DB.find(r => r.id === selectedReactionDetails)?.funFact && (
                                                 <div className="bg-blue-900/20 border border-blue-500/20 rounded-lg p-3 text-sm text-blue-100">
-                                                    <span className="font-bold text-blue-300 block mb-1">Ciekawostka IRL:</span>
-                                                    {REACTIONS_DB.find(r => r.id === selectedReactionDetails)?.funFact}
+                                                    <span className="font-bold text-blue-300 block mb-1">{tx("Ciekawostka IRL:")}</span>
+                                                    {tx(REACTIONS_DB.find(r => r.id === selectedReactionDetails)?.funFact || "")}
                                                 </div>
                                             )}
                                             <div className="mt-auto pt-4 flex justify-end">
-                                              <button onClick={() => setSelectedReactionDetails(null)} className="bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded text-white font-bold">Wróć</button>
+                                              <button onClick={() => setSelectedReactionDetails(null)} className="bg-slate-700 hover:bg-slate-600 px-6 py-2 rounded text-white font-bold">{tx("Wróć")}</button>
                                             </div>
                                         </div>
                                     </div>
@@ -5261,28 +5489,97 @@ export const GameCanvas = () => {
         </div>
       )}
 
-
+      {gameStateUi === 'gameover' && engineRef.current && (
+        <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-black/90 text-slate-100 z-50 backdrop-blur-xl animate-in fade-in zoom-in duration-500">
+          <div className="text-[120px] mb-2 animate-pulse drop-shadow-[0_0_30px_rgba(220,38,38,0.8)]">☠️</div>
+          <h1 className="text-5xl md:text-7xl font-black text-red-500 tracking-tighter drop-shadow-[0_0_20px_rgba(220,38,38,0.6)] mb-2 text-center uppercase">
+            {tx("KONIEC GRY")}
+          </h1>
+          <p className="text-lg md:text-xl mb-8 uppercase tracking-widest font-bold text-slate-400 text-center">
+            {tx("Eksperyment Zakończony Niepowodzeniem")}
+          </p>
+          <div className="flex flex-col gap-3 w-full max-w-[300px]">
+            {(() => {
+                const cost = 50 * ((engineRef.current.state.revivesUsed || 0) + 1);
+                const canAfford = engineRef.current.state.protons >= cost;
+                const canRevive = (engineRef.current.state.revivesUsed || 0) < 2;
+                
+                if (!canRevive) {
+                    return <div className="text-center text-slate-400 font-bold mb-4 bg-slate-900/50 py-3 rounded-xl border border-slate-700/50">{tx("Wykorzystano limit wskrzeszeń (2/2)")}</div>;
+                }
+                
+                return (
+                    <>
+                        <button 
+                            disabled={!canAfford}
+                            onClick={() => {
+                                if (engineRef.current && canAfford && canRevive) {
+                                    engineRef.current.state.protons -= cost;
+                                    engineRef.current.revivePlayer();
+                                    setTriggerRender(r => r + 1);
+                                }
+                            }}
+                            className={`w-full py-4 rounded-xl font-black tracking-widest transition-all uppercase flex items-center justify-center gap-2 ${canAfford ? 'bg-indigo-600 hover:bg-indigo-500 text-white shadow-[0_0_20px_rgba(79,70,229,0.5)] hover:scale-105' : 'bg-slate-800 text-slate-500 cursor-not-allowed opacity-50'}`}
+                        >
+                            <span>{tx("Wskrześ za")}</span> 
+                            <span className="text-indigo-300 mx-1">{cost}</span> 
+                            <span>p⁺</span>
+                        </button>
+                        
+                        <button 
+                            onClick={() => {
+                                // Simulate Ad
+                                if (engineRef.current && canRevive) {
+                                    alert(tx("Symulacja Reklamy... (Tu odpaliłoby się wideo). Otrzymujesz Drugie Życie!"));
+                                    engineRef.current.revivePlayer();
+                                    setTriggerRender(r => r + 1);
+                                }
+                            }}
+                            className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-black py-4 px-4 rounded-xl shadow-[0_0_20px_rgba(16,185,129,0.5)] transition-all hover:scale-105 uppercase tracking-widest flex items-center justify-center gap-2"
+                        >
+                            <span>{tx("📺 Obejrzyj Reklamę")}</span>
+                        </button>
+                    </>
+                );
+            })()}
+            
+            <button 
+                onClick={() => {
+                    if (engineRef.current) {
+                        engineRef.current.forceWipeReset();
+                        setTriggerRender(r => r + 1);
+                    }
+                }}
+                className="w-full mt-4 bg-slate-800 hover:bg-slate-700 border border-slate-600 text-slate-300 font-bold py-3 px-4 rounded-xl transition-all hover:scale-105 uppercase tracking-widest text-sm"
+            >
+                {tx("Zakończ Podejście")} ({tx("Wróć do Menu")})
+            </button>
+          </div>
+        </div>
+      )}
 
       {gameStateUi === 'victory_screen' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-20 backdrop-blur-md animate-in fade-in zoom-in duration-700 p-2 md:p-4">
+        <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-20 backdrop-blur-md animate-in fade-in zoom-in duration-700 p-2 md:p-4">
           <div className="w-full text-center flex flex-col items-center justify-center overflow-y-auto max-h-screen py-4 md:py-10">
-              {(engineRef.current?.state.level || 1) > 6 ? (
-                  <h1 className="text-4xl md:text-8xl font-black text-amber-400 tracking-tighter drop-shadow-[0_0_20px_rgba(251,191,36,0.6)] mb-2 text-center">OSTATECZNE ZWYCIĘSTWO!</h1>
+                            {(engineRef.current?.state.level || 1) === 6 ? (
+                  <h1 className="text-4xl md:text-8xl font-black text-amber-400 tracking-tighter drop-shadow-[0_0_20px_rgba(251,191,36,0.6)] mb-2 text-center">{tx("WYGRANA!")}</h1>
               ) : (
-                  <h1 className="text-4xl md:text-8xl font-black text-green-400 tracking-tighter drop-shadow-[0_0_20px_rgba(74,222,128,0.6)] mb-2 text-center">ZWYCIĘSTWO!</h1>
+                  <h1 className="text-4xl md:text-8xl font-black text-green-400 tracking-tighter drop-shadow-[0_0_20px_rgba(74,222,128,0.6)] mb-2 text-center">{tx("VICTORY")}</h1>
               )}
               <p className="text-xl md:text-2xl mb-4 md:mb-8 uppercase tracking-widest font-bold text-slate-300 text-center">
-                Dungeon Poziom <span className="text-white">{(engineRef.current?.state.level || 1) - 1}</span> Oczyszczony!
+                Dungeon {tx("Poziom ")}<span className="text-white">{(engineRef.current?.state.level || 1) - 1}</span>{tx(" Oczyszczony!")}
               </p>
 
-              {(engineRef.current?.state.level || 1) > 6 && (
+              {(engineRef.current?.state.level || 1) === 6 && (
                   <div className="max-w-xl text-center mb-4 md:mb-8 bg-amber-900/40 p-4 rounded-xl border border-amber-500/30 text-amber-200 font-bold text-sm md:text-base">
-                      Gratulacje! Przetrwałeś wszystkie 6 poziomów! Czas zacząć od nowa, by bić kolejne rekordy!
+                      {tx("Gratulacje! Przetrwałeś 5 poziomów i ukończyłeś grę!")}<br/>
+                      <span className="text-yellow-300 font-black text-lg block mt-2 mb-1">🏆 {tx("ODBLOKOWANO NOWĄ POSTAĆ: MENDELEJEW")} 🏆</span>
+                      <span className="text-xs text-amber-300/70">{tx("Mendelejew zawsze zaczyna z 4 losowymi pierwiastkami.")}</span>
                   </div>
               )}
               
               <div className="bg-[#1e293b]/70 border border-slate-700 rounded-xl p-4 md:p-6 w-full max-w-[400px] mb-6 md:mb-8 shadow-2xl backdrop-blur-xl">
-                 <h2 className="text-center text-lg md:text-xl font-bold text-indigo-300 mb-3 md:mb-4 border-b border-slate-700 pb-2">Statystyki Zabitych</h2>
+                 <h2 className="text-center text-lg md:text-xl font-bold text-indigo-300 mb-3 md:mb-4 border-b border-slate-700 pb-2">{tx("Statystyki Zabitych")}</h2>
                  <ul className="max-h-[120px] md:max-h-[200px] overflow-auto space-y-1.5 md:space-y-2 pr-2">
                 {engineRef.current && Object.entries(engineRef.current.state.dungeonKills || {}).length > 0 ? (
                     Object.entries(engineRef.current.state.dungeonKills).map(([type, count]) => (
@@ -5292,12 +5589,12 @@ export const GameCanvas = () => {
                         </li>
                     ))
                 ) : (
-                    <li className="text-slate-500 text-center">Brak zabitych wrogów. Pacifist run?!</li>
+                    <li className="text-slate-500 text-center">{tx("")}</li>
                 )}
              </ul>
           </div>
           
-          {(engineRef.current?.state.level || 1) <= 7 ? (
+                    {(engineRef.current?.state.level || 1) < 6 ? (
               <button 
                 onClick={nextLevelFromVictory}
                 className="bg-green-500/10 backdrop-blur-xl border border-green-500/30 rounded-full px-8 py-4 md:px-10 md:py-5 font-bold tracking-widest text-base md:text-lg hover:bg-green-500/20 text-green-200 transition-all shadow-[0_0_20px_rgba(74,222,128,0.3)] mb-4"
@@ -5306,10 +5603,16 @@ export const GameCanvas = () => {
               </button>
           ) : (
               <button 
-                onClick={() => window.location.reload()}
+                onClick={() => {
+                    if (engineRef.current) {
+                        engineRef.current.resetGame();
+                        engineRef.current.state.state = 'menu';
+                        setGameStateUi('menu');
+                    }
+                }}
                 className="bg-amber-500/10 backdrop-blur-xl border border-amber-500/30 rounded-full px-8 py-4 md:px-10 md:py-5 font-bold tracking-widest text-base md:text-lg hover:bg-amber-500/20 text-amber-200 transition-all shadow-[0_0_20px_rgba(251,191,36,0.3)] mb-4"
               >
-                ZAKOŃCZ
+                {tx("WYJŚCIE DO MENU")}
               </button>
           )}
           </div>
@@ -5317,13 +5620,13 @@ export const GameCanvas = () => {
       )}
       
       {gameStateUi === 'proton_tutorial' && (
-        <div className="absolute inset-0 flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-50 backdrop-blur-md">
+        <div className="absolute inset-0 pointer-events-auto flex flex-col items-center justify-center bg-[#0a0a0f]/80 text-slate-100 z-50 backdrop-blur-md">
           <div className="bg-[#1e293b] border-2 border-purple-500 rounded-2xl p-8 max-w-lg text-center shadow-[0_0_50px_rgba(168,85,247,0.4)]">
              <div className="text-6xl mb-4">💥</div>
              <h2 className="text-3xl font-black text-purple-400 mb-4 tracking-tight">ZDOBYTO PROTON!</h2>
              <p className="text-slate-300 text-lg mb-6 leading-relaxed">
-               Zebrałeś swój pierwszy <span className="font-bold text-purple-300">Proton</span>. <br/>
-               Jest to waluta <span className="underline">Lobby</span>, która nie kasuje się po śmierci.
+               {tx("")}<span className="font-bold text-purple-300">{tx("Proton")}</span>{tx("")}
+               {tx("")}<span className="underline">{tx("Lobby")}</span>{tx("")}
                Użyj Protonów, aby kupować nowe postacie na początku gry!
              </p>
              <button 
@@ -5358,7 +5661,7 @@ export const GameCanvas = () => {
                     if (!st.unlockedCharacters.includes('curie_cat')) {
                         st.unlockedCharacters.push('curie_cat');
                     }
-                    engineRef.current.addLog("🤖 KOTBOT O.S: Zhakowano system! Otrzymałeś +15 Protonów i odblokowałeś wszystkie Koty!");
+                    engineRef.current.addLog(tx("🤖 KOTBOT O.S: Zhakowano system! Otrzymałeś +15 Protonów i odblokowałeś wszystkie Koty!"));
                     engineRef.current.saveGame();
                 }
                 setIsCatbotEngineRunning(true);
@@ -5375,6 +5678,8 @@ export const GameCanvas = () => {
       {isCatbotEngineRunning && (
           <CatbotEngine onExit={() => setIsCatbotEngineRunning(false)} />
       )}
+        </div>
+      </div>
     </div>
   );
 };
