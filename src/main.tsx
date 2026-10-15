@@ -1,6 +1,4 @@
-import {StrictMode} from 'react';
-import {createRoot} from 'react-dom/client';
-import App from './App.tsx';
+import './chemicats-v30-9.js';
 import './index.css';
 
 // Register Service Worker for PWA / Android installation support
@@ -15,9 +13,3 @@ if ('serviceWorker' in navigator) {
       });
   });
 }
-
-createRoot(document.getElementById('root')!).render(
-  <StrictMode>
-    <App />
-  </StrictMode>,
-);

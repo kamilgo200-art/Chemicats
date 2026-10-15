@@ -9,6 +9,7 @@ async function startServer() {
   const server = createServer(app);
   const PORT = 3000;
 
+
   // Set up WebSocket server
   const wss = new WebSocketServer({ server, path: '/play' });
 
