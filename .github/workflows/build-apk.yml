@@ -33,17 +33,17 @@ jobs:
 
       - name: Generowanie i synchronizacja projektu Android (Capacitor)
         run: |
-          npm install --no-save @capacitor/core @capacitor/cli @capacitor/android
+          npm install --save-dev @capacitor/core@^7.0.0 @capacitor/cli@^7.0.0 @capacitor/android@^7.0.0
           if [ ! -d "android" ]; then
             npx cap add android
           fi
           npx cap sync android
 
-      - name: Setup Java JDK 17
+      - name: Setup Java JDK 21
         uses: actions/setup-java@v4
         with:
           distribution: 'temurin'
-          java-version: '17'
+          java-version: '21'
 
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
