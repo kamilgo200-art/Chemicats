@@ -1,0 +1,9 @@
+{
+  "appId": "com.chemicats.super",
+  "appName": "Chemicats Super",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "server": {
+    "androidScheme": "https"
+  }
+}
