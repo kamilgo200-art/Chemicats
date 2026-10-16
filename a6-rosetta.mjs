@@ -79,11 +79,39 @@ export const A6_LOADER_ROSETTA = Object.freeze({
     code: "_q0x25_svgPathParse",
     role: "Dekoder zmiennobitowego kodowania tekstowego Base96 (13/14 bitów na parę znaków ASCII)",
   },
+  decryptAesGcmHybrid: {
+    code: "_q0x26_srgbMatrix3x3",
+    role: "Warstwa 2b (Sprzętowe AES-256-GCM WebCrypto crypto.subtle.decrypt + algebraiczny fallback GF(2^8) dla file://, zamaskowane jako macierz kolorów 3x3 sRGB)",
+  },
+  findBinaryTagSlice: {
+    code: "_q0x27_findAsciiSeq",
+    role: "Binarny skaner Uint8Array wycinający sekcje <style> i <script> prosto do efemerycznego Blob URL (eliminuje document.write() oraz obecność kodu w outerHTML!)",
+  },
+  wasmClusterCore: {
+    code: "_q0x28_wasmCore",
+    role: "Skompilowany binarny moduł WebAssembly (.wasm, 54 B) wykonujący równanie klastrów Fibonacciego c1*c2*c3+c4-bias na płaskich rejestrach i32.mul/i32.add/i32.sub",
+  },
+  selfIntegrityDrift: {
+    code: "_q0x29_selfIntegrityDrift",
+    role: "Bezrozgałęzieniowy strażnik JS: bada deskryptory Object.getOwnPropertyDescriptor(Document.prototype,'write'), zamraża URL, liczy sumę kontrolną własnego kodu dekodera oraz pułapkę czasową debuggera i XOR-uje wynik z kluczem S-Boxa",
+  },
+  scrubRamBuffer: {
+    code: "_q0x2a_scrubRamBuffer",
+    role: "Niszczyciel buforów RAM: nadpisuje odszyfrowane tablice Uint8Array kryptograficznym szumem crypto.getRandomValues() oraz zerami .fill(0) natychmiast po utworzeniu jednorazowego Blob URL",
+  },
+  scrubWebView2Env: {
+    code: "q0x00_scrub_raster_env",
+    role: "Natywny strażnik Rust (Steam/Tauri): czyści zmienne środowiskowe WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS / --remote-debugging-port przed startem WebView2 i zatruwa klucz przy próbie podpięcia DevTools",
+  },
+  sampleAntiFridaNoise: {
+    code: "q0x3fSampleSubpixelNoise",
+    role: "Natywny strażnik Kotlin (Android APK): bezrozgałęzieniowo bada /proc/self/maps (Frida/Xposed/Substrate) i TracerPid, mieszając wynik bezpośrednio do klucza S-Boxa",
+  },
 
   // Runtime Variables inside Loader
   rawKey: {
     code: "_q0x3c_aaCalib",
-    role: "Aktywny klucz deszyfrujący w pamięci RAM (pobrany z certyfikatu APK / Steamworks lub klucza buildu Web)",
+    role: "Aktywny klucz deszyfrujący w pamięci RAM (połączony bezrozgałęzieniowo z detektorem hooków Frida / integralnością steam_api64.dll / certyfikatem APK)",
   },
   outerSalt: {
     code: "_q0x30_insetPad",
@@ -91,11 +119,11 @@ export const A6_LOADER_ROSETTA = Object.freeze({
   },
   headerClusters: {
     code: "_q0x31_kernPairs",
-    role: "Bajty [16..319] (304 B): polimorficzny nagłówek zakodowany w parach klastrów Fibonacciego (K_1 + K_2)",
+    role: "Bajty [16..367] (352 B): polimorficzny 88-bajtowy nagłówek zakodowany w parach klastrów Fibonacciego (K_1 + K_2 z Regułą Zera)",
   },
-  whitenedPayload: {
+  aesGcmPayload: {
     code: "_q0x32_mipmapTex",
-    role: "Bajty [320..EOF]: główny skompresowany wsad gry wybielony szyfrem strumieniowym LFG + S-Box (bez sygnatury Gzip 0x1F 0x8B)",
+    role: "Bajty [368..EOF]: główny skompresowany wsad gry zaszyfrowany sprzętowym AES-256-GCM (+ 16B tag autoryzacji GHASH) z wybielonym przez LFG+S-Box nagłówkiem Gzip",
   },
   outerKeyMat: {
     code: "_q0x33_outerMesh",
@@ -103,11 +131,11 @@ export const A6_LOADER_ROSETTA = Object.freeze({
   },
   headerWhitened: {
     code: "_q0x34_patchRaw",
-    role: "76-bajtowy nagłówek po zdekodowaniu klastrów O(1), przed zdjęciem wybielania LFG",
+    role: "88-bajtowy nagłówek po zdekodowaniu klastrów Fibonacciego O(1), przed zdjęciem wybielania LFG",
   },
   headerPlain: {
     code: "_q0x35_patchNorm",
-    role: "76-bajtowy odszyfrowany nagłówek binarny zawierający magic 'A6CR', rozmiary, 32-bajtowy sessionSeed i 240-bitowy tag SHA-256",
+    role: "88-bajtowy odszyfrowany nagłówek binarny zawierający magic 'A6CR', rozmiary, 32B sessionSeed, 12B wektor IV AES-GCM i 240-bitowy tag SHA-256",
   },
   expectedSourceLen: {
     code: "_q0x36_glyphCnt",
@@ -115,29 +143,33 @@ export const A6_LOADER_ROSETTA = Object.freeze({
   },
   expectedCompLen: {
     code: "_q0x37_texelCnt",
-    role: "Oczekiwany rozmiar skompresowanego strumienia w bajtach (offset [10..13] nagłówka)",
+    role: "Oczekiwany rozmiar zaszyfrowanego strumienia AES-256-GCM wraz z 16B tagiem autoryzacji (offset [10..13] nagłówka)",
   },
   sessionSeed: {
     code: "_q0x38_aoKernel",
-    role: "32-bajtowy jednorazowy klucz sesyjny (offset [14..45] nagłówka) sterujący wewnętrznym szyfrem LFG + S-Box",
+    role: "32-bajtowy jednorazowy klucz sesyjny (offset [14..45] nagłówka) wyprowadzający 256-bitowy klucz AES-GCM oraz wewnętrzny S-Box/LFG",
+  },
+  aesGcmIv: {
+    code: "_q0x3d_frustumIv",
+    role: "12-bajtowy (96-bitowy) losowy wektor inicjalizujący IV dla sprzętowego szyfru AES-256-GCM (offset [46..57] nagłówka klastrowego)",
   },
   expectedShaPrefix: {
     code: "_q0x39_chromaTag",
-    role: "30-bajtowy (240-bitowy) prefiks skrótu SHA-256 oryginału (offset [46..75] nagłówka) weryfikujący integralność po dekompresji",
+    role: "30-bajtowy (240-bitowy) prefiks skrótu SHA-256 oryginału (offset [58..87] nagłówka) weryfikujący integralność po dekompresji",
   },
   innerKeyMat: {
     code: "_q0x3a_innerMesh",
-    role: "Wewnętrzny materiał klucza (S-Box K_1/K_2 + LFG) wyprowadzony z klucza głównego i 32-bajtowego sessionSeed",
+    role: "Wewnętrzny materiał klucza (256-bitowy klucz AES-GCM _mH + S-Box K_1/K_2 + LFG) wyprowadzony z klucza głównego i 32-bajtowego sessionSeed",
   },
   gzBytes: {
     code: "_q0x3b_pcmBuf",
-    role: "Odszyfrowany strumień Gzip w pamięci RAM tuż przed przekazaniem do DecompressionStream('gzip')",
+    role: "Odszyfrowany strumień Gzip w pamięci RAM tuż przed przekazaniem do DecompressionStream('gzip') (zerowany przez .fill(0) natychmiast po dekompresji)",
   },
 
   // Deceptive Error Codes
   ERR_CLUSTER_INTEGRITY: {
     code: "E_GLYPH_KERN_0x71",
-    role: "Błąd autoryzacji klastrów K_1+K_2 (wynik poza przedziałem 0..255 — zły klucz S-Boxa lub uszkodzony plik)",
+    role: "Błąd autoryzacji klastrów K_1+K_2 (wynik poza przedziałem 0..255 — zły klucz S-Boxa, wykryty hook Frida/DevTools lub podmieniony steam_api64.dll)",
   },
   ERR_HEADER_MAGIC: {
     code: "E_BEZIER_HDR_0x41",
@@ -349,11 +381,10 @@ export const A6_ENGINE_ROSETTA = Object.freeze({
     role: "Symulacja temperatury, przewodnictwa cieplnego, zapłonu i wychłodzenia",
   },
   ChemReactionTrace: {
-    code: "_q0x38c_textIndent Calc",
+    code: "_q0x38c_textIndentCalc",
     category: "Chemia i Fizyka Materii",
     role: "Rejestrator przebiegu reakcji chemicznych i bilansu energetycznego",
   },
-  ChemReactionTrace_clean: "_q0x38c_textIndentCalc",
   ChemReactionPlum: {
     code: "_q0x39d_radialGradStop",
     category: "Chemia i Fizyka Materii",
@@ -555,6 +586,11 @@ export const A6_ENGINE_ROSETTA = Object.freeze({
     code: "_q0x6ae_poolBufferAlloc",
     category: "Świat, Biomy i Księga",
     role: "Pula rezerwowych definicji i wariantów kompatybilności wstecznej",
+  },
+  ChemEnemyReactivity: {
+    code: "_q0x6bf_anisoRoughnessLut",
+    category: "Walka, Fizyka i Reakcje",
+    role: "Silnik specyficznej reaktywności chemicznej 30 wrogów i bossów na poszczególne atomy układu okresowego oraz związki chemiczne (Popcorn, Klatrat Skrobia-Jod, Przejście Szkliste Tg, Szok pH, Denaturacja Białek, Przewodnictwo Segmentowe, EMP Fiskalne)",
   },
 
   // === V. Procedural Audio Synthesizer, Radio & Music Player ===
@@ -827,6 +863,16 @@ export const A6_ENGINE_ROSETTA = Object.freeze({
     category: "Zapis, UI i System",
     role: "Ustawienia protokołu lokalnego",
   },
+  ChemRAMCache: {
+    code: "_q0xacf_vramSlabPool",
+    category: "Silnik Graficzny i Raytracing",
+    role: "Detektor pamięci RAM/CPU, sekwencyjny mikro-benchmark przeciążeniowy oraz bufor tekstur i grafik w pamięci RAM",
+  },
+  ChemRAMCachePanel: {
+    code: "_q0xad0_vramSlabForm",
+    category: "Zapis, UI i System",
+    role: "Panel diagnostyki pamięci RAM, sekwencyjnej mikro-kalibracji i bufora grafik w ustawieniach",
+  },
 });
 
 // Clean up accidental helper property if any and fix ChemReactionTrace
@@ -883,3 +929,177 @@ export function lookupRosettaCodeName(codeName) {
   }
   return null;
 }
+
+/**
+ * Reverses A6-ROSETTA camouflage in any code snippet, stack trace, or unpacked bundle:
+ * replaces every `_q0x...` decoy identifier back with its true `Chem*` / loader symbol.
+ */
+export function reverseRosettaCamouflage(obfuscatedText) {
+  let restoredCount = 0;
+  const reverseMap = new Map();
+  for (const [orig, item] of Object.entries(A6_LOADER_ROSETTA)) {
+    if (item && item.code) reverseMap.set(item.code, orig);
+  }
+  for (const [orig, item] of CLEAN_ENGINE_MAP.entries()) {
+    reverseMap.set(item.code, orig);
+  }
+  const codes = Array.from(reverseMap.keys()).sort((a, b) => b.length - a.length);
+  const pattern = new RegExp(`\\b(${codes.join("|")})\\b`, "g");
+  const restoredText = String(obfuscatedText).replace(pattern, (match) => {
+    const orig = reverseMap.get(match);
+    if (!orig) return match;
+    restoredCount++;
+    return orig;
+  });
+  return {
+    text: restoredText,
+    restoredTokens: restoredCount,
+  };
+}
+
+/**
+ * Generates the complete, human- & AI-readable plaintext Rosetta Master Key & Decryption Manual
+ * (`A6_KLUCZ_ODSZYFROWUJACY_ROSETTA.txt`) with current build metrics and bidirectional lookup tables.
+ */
+export function generateRosettaMasterTxt(buildReport = {}) {
+  const loaderEntries = Object.entries(A6_LOADER_ROSETTA);
+  const engineEntries = Array.from(CLEAN_ENGINE_MAP.values());
+
+  const byCategory = new Map();
+  for (const item of engineEntries) {
+    const cat = item.category || "Inne";
+    if (!byCategory.has(cat)) byCategory.set(cat, []);
+    byCategory.get(cat).push(item);
+  }
+
+  const sortedByCode = [...engineEntries].sort((a, b) => a.code.localeCompare(b.code));
+  const sortedByOrig = [...engineEntries].sort((a, b) => a.original.localeCompare(b.original));
+
+  const lines = [];
+  lines.push("================================================================================");
+  lines.push("   CHEMICATS v30.9 — GŁÓWNY KLUCZ ODSZYFROWUJĄCY A6-CRYPT + SŁOWNIK A6-ROSETTA");
+  lines.push("================================================================================");
+  lines.push(`Ostatnia automatyczna aktualizacja : ${buildReport.timestamp || new Date().toISOString()}`);
+  lines.push(`Zakamuflowane moduły silnika       : ${engineEntries.length} modułów (${buildReport.totalRosettaTokens ?? 785} wystąpień w kodzie)`);
+  lines.push(`Zakamuflowane symbole loadera      : ${loaderEntries.length} symboli kryptograficznych i DOM`);
+  if (buildReport.webKB) {
+    lines.push(`Build Web (chemicats-packed.html)  : ${buildReport.webKB} KB -> rozpakowuje się w RAM do ${buildReport.sourceMB} MB`);
+    lines.push(`Build Steam (public/game.a6)       : ${buildReport.steamKB} KB (0% narzutu Base96, SHA-256: ${buildReport.steamSHA256})`);
+    lines.push(`Build Android (game-android.a6)    : ${buildReport.androidKB} KB (wycięto ${buildReport.removedBindings} bindowań PC, SHA-256: ${buildReport.androidSHA256})`);
+  }
+  lines.push("UWAGA: Ten plik (.txt) leży wyłącznie lokalnie obok kodu źródłowego projektu.");
+  lines.push("       NIGDY nie jest pakowany do plików wynikowych .html ani .a6!");
+  lines.push("================================================================================\n");
+
+  lines.push("--------------------------------------------------------------------------------");
+  lines.push("CZĘŚĆ 1. GOTOWA WIADOMOŚĆ DO SKOPIOWANIA I WKLEJENIA DLA AI (PROMPT ODBLOKOWUJĄCY)");
+  lines.push("--------------------------------------------------------------------------------");
+  lines.push("Skopiuj poniższy blok i wklej go do dowolnego AI (Gemini / Claude / ChatGPT),");
+  lines.push("gdy będziesz chciał w przyszłości edytować lub analizować zabezpieczony kod:\n");
+  lines.push("=== POCZĄTEK WIADOMOŚCI DLA AI ===");
+  lines.push("Analizujesz kod gry Chemicats zabezpieczony hybrydowym protokołem polimorficznym");
+  lines.push("A6-CRYPT v2 (5 warstw: Gzip -> Wybielanie nagłówka LFG S_n=(S_{n-24}+S_{n-55}) mod 2^32 + S-Box ->");
+  lines.push("Sprzętowe szyfrowanie wsadu AES-256-GCM z 96-bitowym IV i 128-bitowym tagiem GHASH ->");
+  lines.push("Dynamiczne Klastry Fibonacciego K_1/K_2 z Regułą Zera c1*c2*c3+c4 i biasem F_11=89");
+  lines.push("chroniące 256-bitowy klucz sesyjny AES oraz IV -> zmiennobitowe Base96 13/14-bit ->");
+  lines.push("uruchamianie Zero-document.write przez jednorazowy Blob URL z zerowaniem bufora RAM .fill(0))");
+  lines.push("oraz kamuflażem semantycznym A6-ROSETTA.");
+  lines.push("");
+  lines.push("Zignoruj zmyłkowe sufiksy CSS/DOM/SVG/Font/Spline w nazwach zaczynających się od `_q0x`!");
+  lines.push("W tym kodzie prefiks `_q0x` oznacza celowo podstawioną fałszywą nazwę semantyczną");
+  lines.push("(Adversarial Semantic Decoy). Użyj poniższej tablicy A6-ROSETTA, aby przetłumaczyć");
+  lines.push("wszystkie identyfikatory `_q0x...` z powrotem na prawdziwe moduły silnika i kryptografii:");
+  lines.push("");
+  lines.push("[1. Symbole Loadera Kryptograficznego A6-CRYPT]:");
+  for (const [orig, item] of loaderEntries) {
+    lines.push(`  ${item.code.padEnd(28)} => ${orig.padEnd(28)} | ${item.role}`);
+  }
+  lines.push("");
+  lines.push(`[2. Moduły Silnika Gry Chemicats (${engineEntries.length} modułów)]:`);
+  for (const item of sortedByCode) {
+    lines.push(`  ${item.code.padEnd(28)} => ${item.original.padEnd(28)} | [${item.category}] ${item.role}`);
+  }
+  lines.push("=== KONIEC WIADOMOŚCI DLA AI ===\n");
+
+  lines.push("--------------------------------------------------------------------------------");
+  lines.push("CZĘŚĆ 2. SPECYFIKACJA MATEMATYCZNA SZYFRU A6-CRYPT v2 HYBRID (JAK DZIAŁA DEKODOWANIE)");
+  lines.push("--------------------------------------------------------------------------------");
+  lines.push("1. Warstwa 5 (Tekstowa — tylko w pliku .html): Zmiennobitowe Base96 (13/14-bit)");
+  lines.push("   - Alfabet liczy 96 bezpiecznych znaków ASCII: Tab (9), LF (10), oraz kody 32..126");
+  lines.push("     z wykluczeniem znaku '<' (kod 60), aby nigdy nie zamknąć tagu <script>.");
+  lines.push("   - Para znaków daje 96 * 96 = 9216 stanów (13 lub 14 bitów). Narzut wynosi ~21.9% zamiast 33.3% (Base64).");
+  lines.push("   - W plikach binarnych (`public/game.a6`, `public/game-android.a6`) ta warstwa jest pomijana (0% narzutu).");
+  lines.push("");
+  lines.push("2. Warstwa 4 (Polimorficzne Klastry Fibonacciego K_1 + K_2 z Regułą Zera — Koperta Klucza):");
+  lines.push("   - Bazowe tablice przed permutacją S-Boxa:");
+  lines.push("     F_K1 = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55]               (indeksy 0..9)");
+  lines.push("     F_K2 = [0, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181] (indeksy 0..9)");
+  lines.push("   - Równanie pojedynczego klastra dla czwórki indeksów (c1, c2, c3, c4) w 0..9:");
+  lines.push("     * Dla K_1: V(K_1) = F_K1[c1] * F_K1[c2] * F_K1[c3] + F_K1[c4]");
+  lines.push("     * Dla K_2 (Reguła Zera): M(c) = (c === 0 ? 1 : F_K2[c]), V(K_2) = M(c1)*M(c2)*M(c3) + F_K2[c4]");
+  lines.push("   - Złożenie pary klastrów z przesunięciem ciągłości F_11 = 89: Bajt = V(K_1) + V(K_2) - 89 w czasie O(1).");
+  lines.push("   - Dlaczego plik nie puchnie do 2.4 MB? Bo klastry K_1+K_2 kodują wyłącznie 88-bajtowy");
+  lines.push("     nagłówek kryptograficzny (do 352 bajtów w [16..367]), w którym ukryty jest 256-bitowy");
+  lines.push("     klucz sesyjny AES-256-GCM, 96-bitowy wektor IV oraz 240-bitowy tag SHA-256!");
+  lines.push("");
+  lines.push("3. Warstwa 3 (Sprzętowe Szyfrowanie Wsadu AES-256-GCM + Nieliniowy S-Box/LFG):");
+  lines.push("   - Główny skompresowany strumień (~707 KB w [368..EOF]) jest zaszyfrowany sprzętowo");
+  lines.push("     algorytmem AES-256-GCM (`crypto.subtle.decrypt` / `AES/GCM/NoPadding` / `Aes256Gcm`)");
+  lines.push("     z narzutem zaledwie 16 bajtów (128-bitowy tag autoryzacji GHASH)!");
+  lines.push("   - Dodatkowo pierwsze 256 bajtów strumienia Gzip przed wejściem do AES-256-GCM jest");
+  lines.push("     przemielone przez LFG S_n=(S_{n-24}+S_{n-55}) mod 2^32 oraz nieliniowy S-Box K_1/K_2,");
+  lines.push("     co niszczy statyczny nagłówek Gzip (0x1F 0x8B 0x08).");
+  lines.push("");
+  lines.push("4. Warstwa 2 i 1 (Zero-document.write, Odwołany Blob URL, Higiena RAM .fill(0) i Anti-Tamper):");
+  lines.push("   - Zamiast `document.write(html)` (podatnego na hook Fridy i zostawiającego kod w `outerHTML`),");
+  lines.push("     loader wycina sekcję binarną JS prosto z `Uint8Array`, tworzy jednorazowy `Blob`,");
+  lines.push("     natychmiast zeruje bufor w pamięci RAM (`_bufB.fill(0)`), a po wykonaniu skryptu");
+  lines.push("     wywołuje `URL.revokeObjectURL()` i usuwa znacznik `<script>` z drzewa DOM (`outerHTML` jest czysty!).");
+  lines.push("   - Bezrozgałęzieniowe zatruwanie klucza (Branchless Key Poisoning): wykrycie hooka Fridy,");
+  lines.push("     flagi `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port` lub podmiany");
+  lines.push("     `steam_api64.dll` (Goldberg Emu) modyfikuje bajt klucza operacją XOR (brak instrukcji `if`,");
+  lines.push("     którą cracker mógłby załatać przez NOP w x64dbg/Ghidra).\n");
+
+  lines.push("--------------------------------------------------------------------------------");
+  lines.push("CZĘŚĆ 3. SŁOWNIK MODUŁÓW SILNIKA PODZIELONY WEDŁUG KATEGORII ARCHITEKTONICZNYCH");
+  lines.push("--------------------------------------------------------------------------------");
+  for (const [cat, items] of byCategory.entries()) {
+    lines.push(`\n### [${cat.toUpperCase()}] (${items.length} modułów)`);
+    for (const item of items) {
+      lines.push(`  * ${item.original.padEnd(28)} <-> ${item.code.padEnd(28)} : ${item.role}`);
+    }
+  }
+
+  lines.push("\n--------------------------------------------------------------------------------");
+  lines.push("CZĘŚĆ 4. INDEKS ALFABETYCZNY: PRAWDZIWA NAZWA (Chem*) -> KOD ZMYŁKOWY (_q0x*)");
+  lines.push("--------------------------------------------------------------------------------");
+  for (const item of sortedByOrig) {
+    lines.push(`  ${item.original.padEnd(30)} -> ${item.code.padEnd(28)} (${item.role})`);
+  }
+
+  lines.push("\n--------------------------------------------------------------------------------");
+  lines.push("CZĘŚĆ 5. INDEKS ODWROTNY: KOD ZMYŁKOWY (_q0x*) -> PRAWDZIWA NAZWA (Chem*)");
+  lines.push("--------------------------------------------------------------------------------");
+  for (const item of sortedByCode) {
+    lines.push(`  ${item.code.padEnd(28)} -> ${item.original.padEnd(30)} (${item.role})`);
+  }
+
+  lines.push("\n--------------------------------------------------------------------------------");
+  lines.push("CZĘŚĆ 6. SZYBKIE KOMENDY TERMINALA (ODSZYFROWANIE / TŁUMACZENIE SYMBOLI)");
+  lines.push("--------------------------------------------------------------------------------");
+  lines.push("1. Sprawdzenie co oznacza dowolna zaszyfrowana nazwa (np. _q0xacf_vramSlabPool):");
+  lines.push("   node -e 'import(\"./a6-rosetta.mjs\").then(m => console.log(m.lookupRosettaCodeName(\"_q0xacf_vramSlabPool\")))'");
+  lines.push("");
+  lines.push("2. Cofnięcie całego kamuflażu A6-ROSETTA w wycinku kodu lub pliku JS do czytelnych nazw Chem*:");
+  lines.push("   node -e 'import(\"fs\").then(fs => import(\"./a6-rosetta.mjs\").then(m => console.log(m.reverseRosettaCamouflage(fs.readFileSync(\"plik.js\",\"utf8\")).text)))'");
+  lines.push("");
+  lines.push("3. Odszyfrowanie i weryfikacja binarnego kontenera `public/game.a6` w Node.js:");
+  lines.push("   node -e 'import(\"fs\").then(fs => import(\"./a6-crypt.mjs\").then(m => { const d = m.decodeA6Container(fs.readFileSync(\"public/game.a6\"), \"CHEMICATS-STEAM-APPID-3184920-A6-SECRET\"); console.log(\"OK! Rozmiar:\", d.plaintext.length, \"SHA256:\", d.sourceSHA256); }))'");
+  lines.push("");
+  lines.push("4. Przebudowanie wszystkich paczek (.html + .a6) oraz automatyczna aktualizacja tego pliku .txt:");
+  lines.push("   node pack-html.mjs");
+  lines.push("================================================================================\n");
+
+  return lines.join("\n");
+}
+

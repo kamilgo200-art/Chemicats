@@ -9,17 +9,24 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import com.getcapacitor.BridgeActivity
 import java.io.ByteArrayInputStream
+import java.io.File
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.security.MessageDigest
 import java.util.zip.GZIPInputStream
+import javax.crypto.Cipher
+import javax.crypto.spec.GCMParameterSpec
+import javax.crypto.spec.SecretKeySpec
 
 /**
- * Google Play Native Bridge (Capacitor / Android) — A6-CRYPT + A6-ROSETTA Camouflaged Bridge
+ * Google Play Native Bridge (Capacitor / Android) — A6-CRYPT v2 Hybrid + A6-ROSETTA Camouflaged Bridge
  *
- * All internal decoder symbols use the A6-ROSETTA adversarial graphics/spline code-names
- * (`Q0x73CatmullRomRasterizer`, `q0x22BezierMeshLut`, `q0x23BiquadDither`, `q0x24CatmullPatch`)
- * so decompiling `classes.dex` in jadx reveals no cryptographic or DRM method names.
+ * Security upgrades against reverse engineering (Frida / jadx / APK repackaging):
+ * 1. APK Signing Certificate SHA-256 Key Derivation (re-signing APK with keytool/apksigner changes cert hash -> S-Box permutes to garbage).
+ * 2. Branchless Anti-Frida / Anti-Tracer Key Poisoning (`q0x3fSampleSubpixelNoise`): scans `/proc/self/maps` and `/proc/self/status`
+ *    and XORs an accumulator byte directly into the key buffer (zero `if (isHooked) exit()` branches to NOP-patch in smali/arm64).
+ * 3. A6-CRYPT v2 Hybrid: 352B Polymorphic Fibonacci Clusters (K_1 + K_2 with Rule of Zero) unwrap the 256-bit ephemeral key + 96-bit IV
+ *    for hardware-accelerated ARMv8 `AES/GCM/NoPadding` + LFG Gzip-header pre-whitening.
  */
 class MainActivity : BridgeActivity() {
 
@@ -41,13 +48,23 @@ class MainActivity : BridgeActivity() {
                 if (url.endsWith("/game-android.a6") || url.endsWith("/chemicats-a6")) {
                     return try {
                         val rawStream = assets.open("public/game-android.a6").use { it.readBytes() }
+                        val keyBytes = q0x3cAaCalib.toByteArray(Charsets.UTF_8)
+                        // Branchless Anti-Frida / Anti-Debugger Key Poisoning
+                        keyBytes[0] = (keyBytes[0].toInt() xor q0x3fSampleSubpixelNoise()).toByte()
+
                         val domBytes = Q0x73CatmullRomRasterizer.q0x99RasterizeAtlas(
                             rawStream,
-                            q0x3cAaCalib.toByteArray(Charsets.UTF_8)
+                            keyBytes
                         )
                         WebResourceResponse(
                             "text/html",
                             "UTF-8",
+                            200,
+                            "OK",
+                            mapOf(
+                                "Cache-Control" to "no-store, no-cache, must-revalidate",
+                                "X-Content-Type-Options" to "nosniff"
+                            ),
                             ByteArrayInputStream(domBytes)
                         )
                     } catch (e: Exception) {
@@ -64,6 +81,29 @@ class MainActivity : BridgeActivity() {
                 return super.shouldInterceptRequest(view, request)
             }
         }
+    }
+
+    /**
+     * Branchless telemetry check for Frida gadget/agent, Xposed, Substrate, and ptrace TracerPid.
+     * Returns 0x00 on clean hardware, or a non-zero drift mask that silently poisons the A6-CRYPT S-Box key.
+     */
+    private fun q0x3fSampleSubpixelNoise(): Int {
+        var noise = 0
+        try {
+            val statusText = File("/proc/self/status").readText()
+            val tracerLine = statusText.lineSequence().firstOrNull { it.startsWith("TracerPid:") }
+            if (tracerLine != null) {
+                val pid = tracerLine.substringAfter("TracerPid:").trim().toIntOrNull() ?: 0
+                noise = noise or (if (pid != 0) 0x5a else 0x00)
+            }
+        } catch (_: Exception) {}
+        try {
+            val mapsText = File("/proc/self/maps").readText().lowercase()
+            if (mapsText.contains("frida") || mapsText.contains("xposed") || mapsText.contains("substrate")) {
+                noise = noise or 0xa6
+            }
+        } catch (_: Exception) {}
+        return noise
     }
 
     @Suppress("DEPRECATION")
@@ -94,7 +134,7 @@ class MainActivity : BridgeActivity() {
 }
 
 /**
- * Camouflaged Native Kotlin O(1) A6-CRYPT 4-Layer Decoder (disguised as Catmull-Rom Spline Rasterizer)
+ * Camouflaged Native Kotlin O(1) A6-CRYPT v2 Hybrid Decoder (disguised as Catmull-Rom Spline Rasterizer)
  */
 object Q0x73CatmullRomRasterizer {
     private val Q0X10_SPLINE_KNOT_A = intArrayOf(0, 1, 2, 3, 5, 8, 13, 21, 34, 55)
@@ -102,6 +142,7 @@ object Q0x73CatmullRomRasterizer {
     private const val Q0X_TANGENT_BIAS = 89
 
     private class Q0xMeshLut(
+        val mHash: ByteArray,
         val kA: IntArray,
         val kB: IntArray,
         val r55: IntArray
@@ -154,7 +195,7 @@ object Q0x73CatmullRomRasterizer {
             r55[i] = (word xor (i * -0x61c88647)) or 1
         }
 
-        return Q0xMeshLut(kA, kB, r55)
+        return Q0xMeshLut(mHash, kA, kB, r55)
     }
 
     private fun q0x23BiquadDither(inBuf: ByteArray, mesh: Q0xMeshLut): ByteArray {
@@ -217,11 +258,19 @@ object Q0x73CatmullRomRasterizer {
         return out
     }
 
+    private fun q0x26SrgbMatrix3x3(texBytes: ByteArray, key32: ByteArray, iv12: ByteArray): ByteArray {
+        val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+        val keySpec = SecretKeySpec(key32, "AES")
+        val gcmSpec = GCMParameterSpec(128, iv12)
+        cipher.init(Cipher.DECRYPT_MODE, keySpec, gcmSpec)
+        return cipher.doFinal(texBytes)
+    }
+
     fun q0x99RasterizeAtlas(bufA: ByteArray, q0x3cAaCalib: ByteArray): ByteArray {
-        require(bufA.size >= 320) { "E_SVG_LEN_0x25" }
+        require(bufA.size >= 368) { "E_SVG_LEN_0x25" }
         val q0x30InsetPad = bufA.copyOfRange(0, 16)
-        val q0x31KernPairs = bufA.copyOfRange(16, 320)
-        val q0x32MipmapTex = bufA.copyOfRange(320, bufA.size)
+        val q0x31KernPairs = bufA.copyOfRange(16, 368)
+        val q0x32MipmapTex = bufA.copyOfRange(368, bufA.size)
 
         val q0x33OuterMesh = q0x22BezierMeshLut(q0x3cAaCalib, q0x30InsetPad)
         val q0x34PatchRaw = q0x24CatmullPatch(q0x31KernPairs, q0x33OuterMesh)
@@ -238,11 +287,16 @@ object Q0x73CatmullRomRasterizer {
         val q0x36GlyphCnt = bb.getInt(6)
         val q0x37TexelCnt = bb.getInt(10)
         val q0x38AoKernel = q0x35PatchNorm.copyOfRange(14, 46)
-        val q0x39ChromaTag = q0x35PatchNorm.copyOfRange(46, 76)
+        val q0x3dFrustumIv = q0x35PatchNorm.copyOfRange(46, 58)
+        val q0x39ChromaTag = q0x35PatchNorm.copyOfRange(58, 88)
 
         require(q0x32MipmapTex.size == q0x37TexelCnt) { "E_MIPMAP_LEN_0x37" }
         val q0x3aInnerMesh = q0x22BezierMeshLut(q0x3cAaCalib, q0x38AoKernel)
-        val q0x3bPcmBuf = q0x23BiquadDither(q0x32MipmapTex, q0x3aInnerMesh)
+        val q0x3bPcmBuf = q0x26SrgbMatrix3x3(q0x32MipmapTex, q0x3aInnerMesh.mHash, q0x3dFrustumIv)
+
+        val prefLen = minOf(256, q0x3bPcmBuf.size)
+        val restoredPrefix = q0x23BiquadDither(q0x3bPcmBuf.copyOfRange(0, prefLen), q0x3aInnerMesh)
+        System.arraycopy(restoredPrefix, 0, q0x3bPcmBuf, 0, prefLen)
 
         val bufB = GZIPInputStream(ByteArrayInputStream(q0x3bPcmBuf)).use { it.readBytes() }
         require(bufB.size == q0x36GlyphCnt) { "E_GLYPH_CNT_0x36" }
@@ -254,3 +308,4 @@ object Q0x73CatmullRomRasterizer {
         return bufB
     }
 }
+

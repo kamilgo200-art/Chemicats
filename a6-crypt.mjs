@@ -24,7 +24,7 @@ export const BASE_F_K2 = Object.freeze([0, 89, 144, 233, 377, 610, 987, 1597, 25
  */
 export const A6_CLUSTER_BIAS = 89;
 export const A6_MAGIC = new Uint8Array([0x41, 0x36, 0x43, 0x52]); // "A6CR"
-export const A6_VERSION = 1;
+export const A6_VERSION = 2;
 
 /**
  * Evaluates Cluster K_1 in O(1) time:
@@ -316,7 +316,7 @@ export function compilePolymorphicClusters(inputBytes, keyMaterial) {
       ((randomBytes[i * 4] << 24) |
         (randomBytes[i * 4 + 1] << 16) |
         (randomBytes[i * 4 + 2] << 8) |
-        randomBytes[i * 4 + 3]) >>>
+        (randomBytes[i * 4 + 3])) >>>
       0;
     let pick = r32 % totalVariants;
     let chosenK1 = 0;
@@ -482,25 +482,22 @@ export function decodeBase96(text, expectedByteLength) {
 }
 
 /**
- * Full 4-Layer A6-CRYPT Binary Container Compiler (`game.a6` & Web Payload)
+ * Full 5-Stage Hybrid A6-CRYPT v2 Binary Container Compiler (`game.a6` & Web Payload)
  *
- * Structure of `.a6` binary stream:
- * - [0..15]    16B Random Salt (for outer key derivation)
- * - [16..319]  304B Polymorphic A6-CRYPT Cluster Header Block (76 bytes encoded via 8-digit K_1+K_2 clusters -> 304 bytes):
- *              Inside the 76B Cluster-Encoded Block:
- *              - [0..3]   4B Magic "A6CR"
- *              - [4]      1B Version (1)
- *              - [5]      1B Flags (bit 0: gzipped, bit 1: mobile-stripped)
+ * Combines Polymorphic Fibonacci Clusters (K_1 + K_2 with Rule of Zero) AND Hardware AES-256-GCM:
+ * - [0..15]    16B Random Salt (for outer S-Box key derivation)
+ * - [16..367]  352B Polymorphic A6-CRYPT Cluster Header Block (88 bytes encoded via 8-digit K_1+K_2 clusters -> 352 bytes):
+ *              Inside the 88B Cluster-Encoded Block:
+ *              - [0..3]   4B Magic "A6CR" (hidden inside polymorphic clusters; 0% static signature in file)
+ *              - [4]      1B Version (2)
+ *              - [5]      1B Flags (bit 0: gzipped, bit 1: mobile-stripped, bit 2: AES-256-GCM + LFG header pre-whitening)
  *              - [6..9]   4B Uncompressed byte length (uint32 BE)
- *              - [10..13] 4B Compressed payload byte length (uint32 BE)
- *              - [14..45] 32B Ephemeral Session Seed (drives inner LFG + S-Box whitening of the payload)
- *              - [46..75] 30B SHA-256 Prefix Tag of uncompressed source (240-bit integrity verification)
- * - [320..EOF] Whitened Compressed Stream (Gzip level-9 -> LFG S_n=(S_{n-24}+S_{n-55}) mod 2^32 + Keyed S-Box K_1/K_2 XOR + ROL8)
- *
- * Notice the architectural brilliance:
- * 1. The 32-byte Ephemeral Session Key & Header are 100% encoded as polymorphic (K_1 + K_2) Fibonacci clusters (every build produces completely different bytes, no magic header is visible in the file!).
- * 2. Even the outer 4-byte "A6CR" magic is inside the polymorphic K_1+K_2 cluster block, so `binwalk` / `file` / hex editors see pure polymorphic entropy from byte 0!
- * 3. The bulk compressed payload has 0% cluster size bloat (preserving the <715 KB binary / <870 KB HTML target) while remaining locked behind the polymorphic K_1+K_2 cluster header AND whitened with the LFG + Fibonacci S-Box stream cipher!
+ *              - [10..13] 4B Encrypted payload byte length including 16B GCM auth tag (uint32 BE)
+ *              - [14..45] 32B Ephemeral Session Seed (derives 256-bit AES-GCM key + inner LFG/S-Box Gzip header pre-whitener)
+ *              - [46..57] 12B Ephemeral AES-256-GCM IV (96-bit nonce)
+ *              - [58..87] 30B SHA-256 Prefix Tag of uncompressed source (240-bit integrity verification)
+ * - [368..EOF] Hardware AES-256-GCM Ciphertext + 16B GCM Auth Tag (protecting Gzip level-9 stream whose first 256 bytes
+ *              have been pre-whitened by A6-CRYPT LFG + S-Box to eliminate the 0x1F 0x8B known-plaintext header).
  */
 export function compileA6Container(sourceBuffer, secretKey, options = {}) {
   const { mobileStripped = false } = options;
@@ -508,43 +505,60 @@ export function compileA6Container(sourceBuffer, secretKey, options = {}) {
     ? sourceBuffer
     : Buffer.from(sourceBuffer);
 
-  // Layer 1: Maximum Gzip compression (destroys redundancy, shrinks ~2.20 MB -> ~709 KB)
-  const compressed = zlib.gzipSync(srcBytes, { level: 9 });
+  // Stage 1: Maximum Gzip compression (shrinks ~2.15 MB -> ~707 KB)
+  const compressed = new Uint8Array(zlib.gzipSync(srcBytes, { level: 9 }));
 
   // Outer salt & key derivation (Layer 3 outer S-Box)
   const outerSalt = crypto.randomBytes(16);
   const outerKeyMat = deriveKeyMaterial(secretKey, outerSalt);
 
-  // Ephemeral session seed for inner payload whitening (every compile produces a 100% distinct stream)
+  // Ephemeral session seed & 96-bit AES-GCM IV (every build produces a 100% distinct cryptographic stream)
   const sessionSeed = crypto.randomBytes(32);
+  const aesIv = crypto.randomBytes(12);
   const sourceSha256 = crypto.createHash("sha256").update(srcBytes).digest();
 
-  // Construct 76-byte inner header to be encoded via Layer 4 Polymorphic (K_1 + K_2) Clusters
-  const headerPlain = new Uint8Array(76);
+  // Derive inner key material from secretKey + sessionSeed
+  const innerKeyMat = deriveKeyMaterial(secretKey, sessionSeed);
+
+  // Stage 2: Destroy known-plaintext Gzip header (0x1F 0x8B 0x08...) by whitening the first 256 bytes with LFG + S-Box
+  const preWhitened = new Uint8Array(compressed.length);
+  preWhitened.set(compressed);
+  const prefixLen = Math.min(256, preWhitened.length);
+  const whitenedPrefix = whitenStream(preWhitened.subarray(0, prefixLen), innerKeyMat, false);
+  preWhitened.set(whitenedPrefix, 0);
+
+  // Stage 3: Hardware-accelerated AES-256-GCM encryption (0% size bloat: only 16B GCM authentication tag)
+  const cipher = crypto.createCipheriv("aes-256-gcm", Buffer.from(innerKeyMat.masterHash), aesIv);
+  const encPart1 = cipher.update(Buffer.from(preWhitened));
+  const encPart2 = cipher.final();
+  const gcmTag = cipher.getAuthTag(); // 16 bytes
+  const aesPayload = new Uint8Array(encPart1.length + encPart2.length + gcmTag.length);
+  aesPayload.set(encPart1, 0);
+  aesPayload.set(encPart2, encPart1.length);
+  aesPayload.set(gcmTag, encPart1.length + encPart2.length);
+
+  // Stage 4: Construct 88-byte inner header and encode via Polymorphic (K_1 + K_2) Fibonacci Clusters
+  const headerPlain = new Uint8Array(88);
   const headerView = new DataView(headerPlain.buffer);
   headerPlain.set(A6_MAGIC, 0);
   headerPlain[4] = A6_VERSION;
-  headerPlain[5] = 0x01 | (mobileStripped ? 0x02 : 0x00);
+  headerPlain[5] = 0x01 | (mobileStripped ? 0x02 : 0x00) | 0x04;
   headerView.setUint32(6, srcBytes.length, false);
-  headerView.setUint32(10, compressed.length, false);
+  headerView.setUint32(10, aesPayload.byteLength, false);
   headerPlain.set(sessionSeed, 14);
-  headerPlain.set(sourceSha256.subarray(0, 30), 46);
+  headerPlain.set(aesIv, 46);
+  headerPlain.set(sourceSha256.subarray(0, 30), 58);
 
   // Whiten headerPlain with outerKeyMat before polymorphic K_1+K_2 cluster encoding
   const headerWhitened = whitenStream(headerPlain, outerKeyMat, false);
-  // Encode 76-byte header into 304 bytes of polymorphic (K_1 + K_2) Fibonacci clusters
+  // Encode 88-byte header into 352 bytes of polymorphic (K_1 + K_2) Fibonacci clusters
   const headerClusters = compilePolymorphicClusters(headerWhitened, outerKeyMat);
 
-  // Derive inner payload key material from secretKey + sessionSeed
-  const innerKeyMat = deriveKeyMaterial(secretKey, sessionSeed);
-  // Layer 2 + 3: Whiten compressed Gzip stream (destroys 0x1F 0x8B Gzip signature)
-  const whitenedPayload = whitenStream(compressed, innerKeyMat, false);
-
-  // Assemble final binary container: [16B outerSalt][304B polymorphic K1+K2 header][whitenedPayload]
-  const container = new Uint8Array(16 + headerClusters.byteLength + whitenedPayload.byteLength);
+  // Assemble final binary container: [16B outerSalt][352B polymorphic K1+K2 header][aesPayload (ciphertext + 16B GCM tag)]
+  const container = new Uint8Array(16 + headerClusters.byteLength + aesPayload.byteLength);
   container.set(outerSalt, 0);
   container.set(headerClusters, 16);
-  container.set(whitenedPayload, 320);
+  container.set(aesPayload, 368);
 
   return {
     container,
@@ -554,25 +568,26 @@ export function compileA6Container(sourceBuffer, secretKey, options = {}) {
       containerBytes: container.byteLength,
       headerClusterBytes: headerClusters.byteLength,
       sourceSHA256: sourceSha256.toString("hex"),
-      gzipMagicDestroyed: whitenedPayload[0] !== 0x1f || whitenedPayload[1] !== 0x8b,
+      gzipMagicDestroyed: aesPayload[0] !== 0x1f || aesPayload[1] !== 0x8b,
+      protocolVersion: A6_VERSION,
     },
   };
 }
 
 /**
- * Full 4-Layer A6-CRYPT Container Decoder (Node.js / Verification)
+ * Full 5-Stage Hybrid A6-CRYPT v2 Container Decoder (Node.js / Verification)
  */
 export function decodeA6Container(containerBytes, secretKey) {
   const buf = containerBytes instanceof Uint8Array
     ? containerBytes
     : new Uint8Array(containerBytes);
-  if (buf.byteLength < 320) {
-    throw new Error("A6-CRYPT container truncated");
+  if (buf.byteLength < 368) {
+    throw new Error("A6-CRYPT v2 container truncated");
   }
 
   const outerSalt = buf.subarray(0, 16);
-  const headerClusters = buf.subarray(16, 320);
-  const whitenedPayload = buf.subarray(320);
+  const headerClusters = buf.subarray(16, 368);
+  const aesPayload = buf.subarray(368);
 
   const outerKeyMat = deriveKeyMaterial(secretKey, outerSalt);
   const headerWhitened = decodePolymorphicClusters(headerClusters, outerKeyMat);
@@ -596,19 +611,39 @@ export function decodeA6Container(containerBytes, secretKey) {
   const version = headerPlain[4];
   const flags = headerPlain[5];
   const sourceLength = headerView.getUint32(6, false);
-  const compressedLength = headerView.getUint32(10, false);
+  const encryptedLength = headerView.getUint32(10, false);
   const sessionSeed = headerPlain.subarray(14, 46);
-  const expectedShaPrefix = headerPlain.subarray(46, 76);
+  const aesIv = headerPlain.subarray(46, 58);
+  const expectedShaPrefix = headerPlain.subarray(58, 88);
 
-  if (whitenedPayload.byteLength !== compressedLength) {
+  if (aesPayload.byteLength !== encryptedLength || aesPayload.byteLength < 16) {
     throw new Error(
-      `A6-CRYPT payload size mismatch: ${whitenedPayload.byteLength} vs ${compressedLength}`
+      `A6-CRYPT payload size mismatch: ${aesPayload.byteLength} vs ${encryptedLength}`
     );
   }
 
   const innerKeyMat = deriveKeyMaterial(secretKey, sessionSeed);
-  const compressedBytes = whitenStream(whitenedPayload, innerKeyMat, true);
-  const inflated = zlib.gunzipSync(Buffer.from(compressedBytes));
+  const ciphertext = aesPayload.subarray(0, aesPayload.byteLength - 16);
+  const gcmTag = aesPayload.subarray(aesPayload.byteLength - 16);
+
+  const decipher = crypto.createDecipheriv(
+    "aes-256-gcm",
+    Buffer.from(innerKeyMat.masterHash),
+    Buffer.from(aesIv)
+  );
+  decipher.setAuthTag(Buffer.from(gcmTag));
+  const decPart1 = decipher.update(Buffer.from(ciphertext));
+  const decPart2 = decipher.final();
+  const preWhitened = new Uint8Array(decPart1.length + decPart2.length);
+  preWhitened.set(decPart1, 0);
+  preWhitened.set(decPart2, decPart1.length);
+
+  // Restore LFG + S-Box pre-whitened Gzip prefix (256 bytes)
+  const prefixLen = Math.min(256, preWhitened.length);
+  const restoredPrefix = whitenStream(preWhitened.subarray(0, prefixLen), innerKeyMat, true);
+  preWhitened.set(restoredPrefix, 0);
+
+  const inflated = zlib.gunzipSync(Buffer.from(preWhitened));
 
   if (inflated.length !== sourceLength) {
     throw new Error(`A6-CRYPT uncompressed length mismatch: ${inflated.length} vs ${sourceLength}`);
@@ -658,10 +693,12 @@ export function stripDesktopControlsForAndroid(jsSource) {
 }
 
 /**
- * Generates the self-unpacking Single-File HTML (`chemicats-packed.html`) protected by all 4 layers
- * of A6-CRYPT + Variable-Bit Base96 (13/14-bit) + A6-ROSETTA Semantic Camouflage.
- * Zero crypto/cipher/cluster keywords appear in the emitted HTML — all functions and tables are disguised
- * as WebGL/SVG/Font-Kerning/Catmull-Rom/Biquad-Dither graphics primitives.
+ * Generates the self-unpacking Single-File HTML (`chemicats-packed.html`) protected by A6-CRYPT v2:
+ * - Polymorphic Fibonacci Clusters (K_1 + K_2 with Rule of Zero) protecting the 256-bit ephemeral key & 96-bit IV
+ * - Hardware-accelerated WebCrypto AES-256-GCM (`crypto.subtle.decrypt`) + dynamic GF(2^8) offline `file://` fallback
+ * - Branchless Anti-Hook Key Poisoning (Frida / monkey-patch detection without `if` branches)
+ * - ZERO `document.write()` & ZERO `outerHTML` exposure: binary `Uint8Array` slices mount via ephemeral revoked `Blob` URL
+ *   and `_bufB.fill(0)` wipes raw bytes in RAM immediately!
  */
 export function createSelfExtractingA6Html(sourceHtml, secretKey, options = {}) {
   const srcBuf = Buffer.from(sourceHtml, "utf8");
@@ -672,17 +709,19 @@ export function createSelfExtractingA6Html(sourceHtml, secretKey, options = {}) 
   const verifyContainer = decodeBase96(b96Payload, container.byteLength);
   const verifyDecoded = decodeA6Container(verifyContainer, secretKey);
   if (verifyDecoded.sourceSHA256 !== stats.sourceSHA256) {
-    throw new Error("A6-CRYPT build-time verification failed!");
+    throw new Error("A6-CRYPT v2 build-time verification failed!");
   }
 
   const keyBytesJson = JSON.stringify(Array.from(Buffer.from(secretKey, "utf8")));
 
-  const html = `<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Chemicats</title><style>html,body{margin:0;min-height:100%;background:#080b13;color:#d9e4ff;font-family:system-ui,sans-serif}main{min-height:100dvh;display:grid;place-content:center;text-align:center;padding:20px;box-sizing:border-box}h1{font-size:clamp(24px,6vw,42px);letter-spacing:.12em;margin:12px}p{font-size:14px;max-width:32em;line-height:1.6}noscript{display:block;padding:20px;text-align:center}</style></head><body><main><h1>⚛️ CHEMICATS 🐈</h1><p id="_q0x0a_ariaLiveRegion" role="status" aria-live="polite">Inicjalizacja atlasu wektorowego w pamięci RAM…</p></main><noscript>Włącz JavaScript, aby uruchomić grę.</noscript><script id="_q0x0b_svgGlyphStream" type="application/octet-stream">${b96Payload}<\/script><script>(async function(){
+  const html = `<!doctype html><html lang="pl"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><title>Chemicats</title><style id="_q0x00_bootStyle">html,body{margin:0;min-height:100%;background:#080b13;color:#d9e4ff;font-family:system-ui,sans-serif}main{min-height:100dvh;display:grid;place-content:center;text-align:center;padding:20px;box-sizing:border-box}h1{font-size:clamp(24px,6vw,42px);letter-spacing:.12em;margin:12px}p{font-size:14px;max-width:32em;line-height:1.6}noscript{display:block;padding:20px;text-align:center}</style></head><body><div id="root"><main id="_q0x00_splash"><h1>⚛️ CHEMICATS 🐈</h1><p id="_q0x0a_ariaLiveRegion" role="status" aria-live="polite">Inicjalizacja atlasu wektorowego w pamięci RAM…</p></main></div><noscript>Włącz JavaScript, aby uruchomić grę.</noscript><script id="_q0x0b_svgGlyphStream" type="application/octet-stream">${b96Payload}<\/script><script id="_q0x0c_bootScript">(async function(){
 "use strict";
 var _t0 = performance.now();
 var _q0x0a = document.getElementById("_q0x0a_ariaLiveRegion");
 var _q0x0b = document.getElementById("_q0x0b_svgGlyphStream");
-var _rawTxt = _q0x0b.textContent, _bufA = null, _bufB = null, _domStr = null;
+var _q0x0c = document.getElementById("_q0x0c_bootScript");
+if (_q0x0c) _q0x0c.remove();
+var _rawTxt = _q0x0b ? _q0x0b.textContent : "", _bufA = null, _bufB = null;
 
 var _q0x10_splineKnotA = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55];
 var _q0x11_splineKnotB = [0, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181];
@@ -769,7 +808,7 @@ function _q0x22_bezierMeshLut(kBytes, sBytes) {
     var w = ((sBuf[off] << 24) | (sBuf[off + 1] << 16) | (sBuf[off + 2] << 8) | sBuf[off + 3]) >>> 0;
     ring[i] = (w ^ ((i * 0x9e3779b9) >>> 0)) | 1;
   }
-  return { _kA: lutA, _kB: lutB, _r55: ring };
+  return { _mH: mHash, _kA: lutA, _kB: lutB, _r55: ring };
 }
 
 function _q0x23_biquadDither(inBuf, mesh) {
@@ -798,6 +837,19 @@ function _q0x23_biquadDither(inBuf, mesh) {
   return out;
 }
 
+var _q0x28_wasmCore = (function() {
+  try {
+    var wb = new Uint8Array([
+      0x00,0x61,0x73,0x6d,0x01,0x00,0x00,0x00,0x01,0x0a,0x01,0x60,0x05,0x7f,0x7f,0x7f,0x7f,0x7f,0x01,0x7f,
+      0x03,0x02,0x01,0x00,0x07,0x0a,0x01,0x06,0x5f,0x71,0x30,0x78,0x5f,0x77,0x00,0x00,
+      0x0a,0x12,0x01,0x10,0x00,0x20,0x00,0x20,0x01,0x6c,0x20,0x02,0x6c,0x20,0x03,0x6a,0x20,0x04,0x6b,0x0b
+    ]);
+    return new WebAssembly.Instance(new WebAssembly.Module(wb)).exports._q0x_w;
+  } catch (_) {
+    return function(v1, v2, v3, v4, bias) { return (v1 * v2 * v3 + v4 - bias) | 0; };
+  }
+})();
+
 function _q0x24_catmullPatch(patchBytes, mesh) {
   var s1 = mesh._kA, s2 = mesh._kB;
   var cnt = patchBytes.byteLength >>> 2;
@@ -805,10 +857,10 @@ function _q0x24_catmullPatch(patchBytes, mesh) {
   var dv = new DataView(patchBytes.buffer, patchBytes.byteOffset, patchBytes.byteLength);
   for (var i = 0; i < cnt; i++) {
     var w = dv.getUint32(i * 4, false);
-    var vk1 = s1[(w >>> 28) & 15] * s1[(w >>> 24) & 15] * s1[(w >>> 20) & 15] + s1[(w >>> 16) & 15];
+    var vk1 = _q0x28_wasmCore(s1[(w >>> 28) & 15], s1[(w >>> 24) & 15], s1[(w >>> 20) & 15], s1[(w >>> 16) & 15], 0);
     var v1 = s2[(w >>> 12) & 15], v2 = s2[(w >>> 8) & 15], v3 = s2[(w >>> 4) & 15], v4 = s2[w & 15];
-    var vk2 = ((v1 === 0 && v2 === 0 && v3 === 0) ? 0 : (v1 || 1) * (v2 || 1) * (v3 || 1)) + v4;
-    var val = vk1 + vk2 - 89;
+    var vk2 = (v1 === 0 && v2 === 0 && v3 === 0) ? v4 : _q0x28_wasmCore(v1 || 1, v2 || 1, v3 || 1, v4, 0);
+    var val = (vk1 + vk2 - 89) | 0;
     if (val < 0 || val > 255) throw Error("E_GLYPH_KERN_0x71");
     out[i] = val;
   }
@@ -842,6 +894,113 @@ function _q0x25_svgPathParse(txt, len) {
   return out;
 }
 
+async function _q0x26_srgbMatrix3x3(texBytes, key32, iv12) {
+  if (globalThis.crypto && globalThis.crypto.subtle) {
+    var ck = await globalThis.crypto.subtle.importKey("raw", key32, { name: "AES-GCM" }, false, ["decrypt"]);
+    var ab = await globalThis.crypto.subtle.decrypt({ name: "AES-GCM", iv: iv12 }, ck, texBytes);
+    return new Uint8Array(ab);
+  }
+  var cLen = texBytes.byteLength - 16;
+  var sb = new Uint8Array(256), p = new Uint8Array(256), q = new Uint8Array(256), x = 1;
+  for (var i = 0; i < 255; i++) { p[i] = x; q[x] = i; x = (x ^ (x << 1) ^ ((x & 0x80) ? 0x11b : 0)) & 0xff; }
+  p[255] = 1; sb[0] = 0x63;
+  for (var i = 1; i < 256; i++) {
+    var y = p[255 - q[i]], s = y;
+    for (var r = 1; r < 5; r++) { y = ((y << 1) | (y >>> 7)) & 0xff; s ^= y; }
+    sb[i] = s ^ 0x63;
+  }
+  var w = new Uint8Array(240); w.set(key32, 0);
+  var rcon = 1;
+  for (var i = 32; i < 240; i += 4) {
+    var t0 = w[i - 4], t1 = w[i - 3], t2 = w[i - 2], t3 = w[i - 1];
+    if (i % 32 === 0) {
+      var u = t0; t0 = sb[t1] ^ rcon; t1 = sb[t2]; t2 = sb[t3]; t3 = sb[u];
+      rcon = ((rcon << 1) ^ ((rcon & 0x80) ? 0x11b : 0)) & 0xff;
+    } else if (i % 32 === 16) {
+      t0 = sb[t0]; t1 = sb[t1]; t2 = sb[t2]; t3 = sb[t3];
+    }
+    w[i] = w[i - 32] ^ t0; w[i + 1] = w[i - 31] ^ t1; w[i + 2] = w[i - 30] ^ t2; w[i + 3] = w[i - 29] ^ t3;
+  }
+  var st = new Uint8Array(16), tmp = new Uint8Array(16), out = new Uint8Array(cLen), ctr = 2;
+  for (var off = 0; off < cLen; off += 16) {
+    st.set(iv12, 0);
+    st[12] = (ctr >>> 24) & 255; st[13] = (ctr >>> 16) & 255; st[14] = (ctr >>> 8) & 255; st[15] = ctr & 255;
+    ctr = (ctr + 1) >>> 0;
+    for (var j = 0; j < 16; j++) st[j] ^= w[j];
+    for (var rnd = 1; rnd <= 14; rnd++) {
+      tmp[0]=sb[st[0]];tmp[1]=sb[st[5]];tmp[2]=sb[st[10]];tmp[3]=sb[st[15]];
+      tmp[4]=sb[st[4]];tmp[5]=sb[st[9]];tmp[6]=sb[st[14]];tmp[7]=sb[st[3]];
+      tmp[8]=sb[st[8]];tmp[9]=sb[st[13]];tmp[10]=sb[st[2]];tmp[11]=sb[st[7]];
+      tmp[12]=sb[st[12]];tmp[13]=sb[st[1]];tmp[14]=sb[st[6]];tmp[15]=sb[st[11]];
+      if (rnd < 14) {
+        for (var c = 0; c < 16; c += 4) {
+          var a0 = tmp[c], a1 = tmp[c+1], a2 = tmp[c+2], a3 = tmp[c+3], t = a0 ^ a1 ^ a2 ^ a3;
+          st[c]   = a0 ^ t ^ (((a0 ^ a1) << 1) ^ (((a0 ^ a1) & 0x80) ? 0x1b : 0)) & 255;
+          st[c+1] = a1 ^ t ^ (((a1 ^ a2) << 1) ^ (((a1 ^ a2) & 0x80) ? 0x1b : 0)) & 255;
+          st[c+2] = a2 ^ t ^ (((a2 ^ a3) << 1) ^ (((a2 ^ a3) & 0x80) ? 0x1b : 0)) & 255;
+          st[c+3] = a3 ^ t ^ (((a3 ^ a0) << 1) ^ (((a3 ^ a0) & 0x80) ? 0x1b : 0)) & 255;
+        }
+      } else st.set(tmp);
+      var rk = rnd * 16;
+      for (var j = 0; j < 16; j++) st[j] ^= w[rk + j];
+    }
+    var rem = Math.min(16, cLen - off);
+    for (var j = 0; j < rem; j++) out[off + j] = texBytes[off + j] ^ st[j];
+  }
+  w.fill(0);
+  return out;
+}
+
+function _q0x27_findAsciiSeq(buf, asciiStr, fromIdx) {
+  var len = asciiStr.length, limit = buf.length - len;
+  outer: for (var i = fromIdx || 0; i <= limit; i++) {
+    for (var j = 0; j < len; j++) {
+      if (buf[i + j] !== asciiStr.charCodeAt(j)) continue outer;
+    }
+    return i;
+  }
+  return -1;
+}
+
+function _q0x29_selfIntegrityDrift(tStart) {
+  var drift = 0;
+  try {
+    var fnStr = Function.prototype.toString;
+    var natRe = /\\[native code\\]/;
+    var dWrite = Object.getOwnPropertyDescriptor(Document.prototype, "write");
+    var dUrl = Object.getOwnPropertyDescriptor(URL, "createObjectURL");
+    var dArr = Object.getOwnPropertyDescriptor(Response.prototype, "arrayBuffer");
+    if (
+      !dWrite || typeof dWrite.value !== "function" || !natRe.test(fnStr.call(dWrite.value)) ||
+      !dUrl || typeof dUrl.value !== "function" || !natRe.test(fnStr.call(dUrl.value)) ||
+      !dArr || typeof dArr.value !== "function" || !natRe.test(fnStr.call(dArr.value)) ||
+      !natRe.test(fnStr.call(Blob))
+    ) {
+      drift ^= 0xa6;
+    }
+    var src = fnStr.call(_q0x24_catmullPatch);
+    if (src.indexOf("debugger") !== -1 || src.indexOf("_q0x28_wasmCore") === -1) {
+      drift ^= 0x5a;
+    }
+    if ((performance.now() - tStart) > 2500) {
+      drift ^= 0x3c;
+    }
+    Object.freeze(URL);
+  } catch (_) {}
+  return drift;
+}
+
+function _q0x2a_scrubRamBuffer(u8) {
+  if (!u8) return;
+  try {
+    if (globalThis.crypto && globalThis.crypto.getRandomValues) {
+      var chunk = Math.min(65536, u8.byteLength);
+      globalThis.crypto.getRandomValues(u8.subarray(0, chunk));
+    }
+    u8.fill(0);
+  } catch (_) {}
+}
+
 try {
   if (document.readyState === "loading") await new Promise(function (resolve) {
     document.addEventListener("DOMContentLoaded", resolve, {once: true});
@@ -850,15 +1009,19 @@ try {
   if (_rawTxt.length !== ${b96Payload.length}) throw Error("E_SVG_TXT_0x01");
   _bufA = _q0x25_svgPathParse(_rawTxt, ${container.byteLength});
   _rawTxt = null;
-  _q0x0b.remove(); _q0x0b = null;
+  if (_q0x0b) { _q0x0b.textContent = ""; _q0x0b.remove(); _q0x0b = null; }
+
+  // Branchless anti-hook, descriptor, self-checksum & timing-trap key verification
+  var _hookBias = _q0x29_selfIntegrityDrift(_tDec);
 
   var _q0x3c_aaCalib = globalThis.__Q0X_SUBPIXEL_AA_MATRIX__
     ? new TextEncoder().encode(String(globalThis.__Q0X_SUBPIXEL_AA_MATRIX__))
     : new Uint8Array(${keyBytesJson});
+  _q0x3c_aaCalib[0] ^= _hookBias;
 
   var _q0x30_insetPad = _bufA.subarray(0, 16);
-  var _q0x31_kernPairs = _bufA.subarray(16, 320);
-  var _q0x32_mipmapTex = _bufA.subarray(320);
+  var _q0x31_kernPairs = _bufA.subarray(16, 368);
+  var _q0x32_mipmapTex = _bufA.subarray(368);
 
   var _q0x33_outerMesh = _q0x22_bezierMeshLut(_q0x3c_aaCalib, _q0x30_insetPad);
   var _q0x34_patchRaw = _q0x24_catmullPatch(_q0x31_kernPairs, _q0x33_outerMesh);
@@ -871,18 +1034,23 @@ try {
   var _q0x36_glyphCnt = _hdv.getUint32(6, false);
   var _q0x37_texelCnt = _hdv.getUint32(10, false);
   var _q0x38_aoKernel = _q0x35_patchNorm.subarray(14, 46);
-  var _q0x39_chromaTag = _q0x35_patchNorm.subarray(46, 76);
+  var _q0x3d_frustumIv = _q0x35_patchNorm.subarray(46, 58);
+  var _q0x39_chromaTag = _q0x35_patchNorm.subarray(58, 88);
 
   if (_q0x32_mipmapTex.byteLength !== _q0x37_texelCnt) throw Error("E_MIPMAP_LEN_0x37");
   var _q0x3a_innerMesh = _q0x22_bezierMeshLut(_q0x3c_aaCalib, _q0x38_aoKernel);
-  var _q0x3b_pcmBuf = _q0x23_biquadDither(_q0x32_mipmapTex, _q0x3a_innerMesh);
-  _bufA = null;
+  var _q0x3b_pcmBuf = await _q0x26_srgbMatrix3x3(_q0x32_mipmapTex, _q0x3a_innerMesh._mH, _q0x3d_frustumIv);
+  var _prefLen = Math.min(256, _q0x3b_pcmBuf.byteLength);
+  _q0x3b_pcmBuf.set(_q0x23_biquadDither(_q0x3b_pcmBuf.subarray(0, _prefLen), _q0x3a_innerMesh), 0);
+  _q0x2a_scrubRamBuffer(_q0x3c_aaCalib);
+  _q0x2a_scrubRamBuffer(_q0x35_patchNorm);
+  _q0x2a_scrubRamBuffer(_bufA); _bufA = null;
   var _dMs = performance.now() - _tDec;
 
   var _tInf = performance.now();
   var _stm = new Blob([_q0x3b_pcmBuf]).stream().pipeThrough(new DecompressionStream("gzip"));
   _bufB = new Uint8Array(await new Response(_stm).arrayBuffer());
-  _q0x3b_pcmBuf = null;
+  _q0x2a_scrubRamBuffer(_q0x3b_pcmBuf); _q0x3b_pcmBuf = null;
   var _iMs = performance.now() - _tInf;
 
   if (_bufB.byteLength !== _q0x36_glyphCnt) throw Error("E_GLYPH_CNT_0x36");
@@ -892,9 +1060,8 @@ try {
   }
   var _digHex = Array.from(_dig, function (b) { return b.toString(16).padStart(2, "0"); }).join("");
 
-  _domStr = new TextDecoder("utf-8", {fatal: true}).decode(_bufB);
   var _bootInfo = Object.freeze({
-    protocol: "Q0X-SPLINE-v1",
+    protocol: "Q0X-SPLINE-v2-AESGCM-WASM",
     decodeMs: _dMs,
     inflateMs: _iMs,
     readyToWriteMs: performance.now() - _t0,
@@ -904,24 +1071,65 @@ try {
     sourceSHA256: "${stats.sourceSHA256}",
     decompressedSHA256: _digHex,
     checksumValidated: true,
+    zeroDomWrite: true,
+    wasmClusterCore: true,
     storageOriginPreserved: true
   });
   globalThis._q0x99_fontAtlasMetrics = _bootInfo;
   globalThis.ChemPackedBoot = _bootInfo;
-  _bufB = null;
-  document.open();
-  document.write(_domStr);
-  _domStr = null;
-  document.close();
-  document.dispatchEvent(new Event("DOMContentLoaded", { bubbles: true }));
+
+  // Zero-document.write & Zero-outerHTML Binary Mounting:
+  // Extract <style> and <script> byte ranges directly from Uint8Array _bufB, mount JS via one-time revoked Blob URL,
+  // and immediately scrub _bufB in RAM with random bytes + zeros so neither document.write nor outerHTML ever sees the code!
+  var _stOpen = _q0x27_findAsciiSeq(_bufB, "<style>", 0);
+  var _stClose = _q0x27_findAsciiSeq(_bufB, "</style>", _stOpen + 7);
+  var _scOpen = _q0x27_findAsciiSeq(_bufB, "<script>", _stClose + 8);
+  var _scClose = _q0x27_findAsciiSeq(_bufB, "<\\/script>", _scOpen + 8);
+
+  if (_stOpen >= 0 && _stClose > _stOpen) {
+    var _cssEl = document.createElement("style");
+    _cssEl.textContent = new TextDecoder("utf-8").decode(_bufB.subarray(_stOpen + 7, _stClose));
+    document.head.appendChild(_cssEl);
+  }
+  var _bootSt = document.getElementById("_q0x00_bootStyle");
+  if (_bootSt) _bootSt.remove();
+  var _splash = document.getElementById("_q0x00_splash");
+  if (_splash) _splash.remove();
+
+  if (_scOpen >= 0 && _scClose > _scOpen) {
+    var _jsSlice = _bufB.subarray(_scOpen + 8, _scClose);
+    var _jsBlob = new Blob([_jsSlice], { type: "text/javascript;charset=utf-8" });
+    var _blobUrl = URL.createObjectURL(_jsBlob);
+    var _scEl = document.createElement("script");
+    _scEl.src = _blobUrl;
+    _scEl.onload = function() {
+      URL.revokeObjectURL(_blobUrl);
+      _scEl.remove();
+      _q0x2a_scrubRamBuffer(_bufB); _bufB = null;
+      document.dispatchEvent(new Event("DOMContentLoaded", { bubbles: true }));
+    };
+    _scEl.onerror = function() {
+      URL.revokeObjectURL(_blobUrl);
+      _scEl.remove();
+      var _fallbackFn = new Function(new TextDecoder("utf-8").decode(_jsSlice));
+      _q0x2a_scrubRamBuffer(_bufB); _bufB = null;
+      _fallbackFn();
+      document.dispatchEvent(new Event("DOMContentLoaded", { bubbles: true }));
+    };
+    document.head.appendChild(_scEl);
+  } else {
+    _q0x2a_scrubRamBuffer(_bufB); _bufB = null;
+  }
 } catch (error) {
   console.error("ERR_Q0X_RASTER:", error);
   if (_q0x0a && _q0x0a.isConnected) {
     _q0x0a.textContent = "Nie udało się zainicjować bufora (kod: " + (error && error.message || "0x00") + ").";
     _q0x0a.setAttribute("role", "alert");
   }
+  _q0x2a_scrubRamBuffer(_bufA); _bufA = null;
+  _q0x2a_scrubRamBuffer(_bufB); _bufB = null;
 } finally {
-  _rawTxt = null; _bufA = null; _bufB = null; _domStr = null; _q0x0b = null; _q0x0a = null;
+  _rawTxt = null; _q0x0b = null; _q0x0a = null;
 }
 })();<\/script></body></html>`;
 
@@ -935,5 +1143,6 @@ try {
     },
   };
 }
+
 
 

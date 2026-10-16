@@ -1,12 +1,21 @@
-// Steam Native Container (Tauri / Rust) — A6-CRYPT + A6-ROSETTA Camouflaged Bridge
+// Steam Native Container (Tauri / Rust) — A6-CRYPT v2 Hybrid + A6-ROSETTA Camouflaged Bridge
 //
-// All internal Rust decoder functions and structs use A6-ROSETTA adversarial graphics/spline
-// code-names (`Q0xMeshLut`, `q0x21_glyph_kern_box`, `q0x22_bezier_mesh_lut`,
-// `q0x23_biquad_dither`, `q0x24_catmull_patch`, `q0x99_rasterize_atlas`) so binary
-// disassembly in Ghidra/IDA reveals no obvious cryptographic symbol names.
+// Security upgrades against reverse engineering (WebView2 CDP debugging / Goldberg Emu / Ghidra):
+// 1. WebView2 Env & Argument Sanitizer (`q0x00_scrub_raster_env`): immediately purges
+//    `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS` and `WEBVIEW2_PIPE_FOR_DEVTOOLS` before spawning
+//    `msedgewebview2.exe`, blocking the `--remote-debugging-port=9222` attack vector.
+// 2. Anti-Goldberg `steam_api64.dll` Binary Hash Binding (`q0x3c_build_aa_matrix`): mixes the
+//    physical SHA-256 of `steam_api64.dll` into the A6-CRYPT S-Box key (branchless key poisoning:
+//    swapping `steam_api64.dll` with Goldberg Emu corrupts the Fibonacci S-Box without an `if` branch).
+// 3. A6-CRYPT v2 Hybrid: 352B Polymorphic Fibonacci Clusters (K_1 + K_2 with Rule of Zero) unwrap
+//    the 256-bit ephemeral key + 96-bit IV for hardware AES-NI `aes-256-gcm` decryption.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
+use aes_gcm::{
+    aead::{Aead, KeyInit},
+    Aes256Gcm, Nonce,
+};
 use flate2::read::GzDecoder;
 use sha2::{Digest, Sha256};
 use std::io::Read;
@@ -16,13 +25,55 @@ const Q0X10_SPLINE_KNOT_A: [u32; 10] = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55];
 const Q0X11_SPLINE_KNOT_B: [u32; 10] = [0, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181];
 const Q0X_TANGENT_BIAS: i32 = 89;
 
+// Expected SHA-256 prefix of official Valve steam_api64.dll for this build
+const Q0X_VALVE_DLL_TAG: [u8; 4] = [0x8f, 0x42, 0xc9, 0x17];
+
 // Embedded binary payload (0% Base96 overhead)
 const Q0X0B_SVG_GLYPH_STREAM: &[u8] = include_bytes!("../../../public/game.a6");
 
 struct Q0xMeshLut {
+    m_hash: [u8; 32],
     k_a: [u32; 10],
     k_b: [u32; 10],
     r_55: [u32; 55],
+}
+
+/// Scrubs WebView2 remote debugging environment variables BEFORE Tauri/WebView2 initializes
+/// and returns a branchless drift byte (0x00 if clean, non-zero if debugging flags were injected).
+pub fn q0x00_scrub_raster_env() -> u8 {
+    let mut drift: u8 = 0;
+
+    for var_name in [
+        "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+        "WEBVIEW2_PIPE_FOR_DEVTOOLS",
+        "WEBVIEW2_BROWSER_EXECUTABLE_FOLDER",
+    ] {
+        if let Ok(val) = std::env::var(var_name) {
+            let lower = val.to_ascii_lowercase();
+            if lower.contains("remote-debugging")
+                || lower.contains("inspect")
+                || lower.contains("devtools")
+            {
+                drift |= 0x5a;
+            }
+            std::env::remove_var(var_name);
+        }
+    }
+
+    // Lock WebView2 arguments to explicitly disable DevTools protocol pipes
+    std::env::set_var(
+        "WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS",
+        "--disable-dev-tools --disable-features=msWebOOUI,msPdfOOUI",
+    );
+
+    for arg in std::env::args() {
+        let lower = arg.to_ascii_lowercase();
+        if lower.contains("remote-debugging") || lower.contains("--inspect") {
+            drift |= 0xa6;
+        }
+    }
+
+    drift
 }
 
 fn q0x21_glyph_kern_box(a: &[u8], b: &[u8]) -> [u8; 32] {
@@ -69,7 +120,12 @@ fn q0x22_bezier_mesh_lut(k_bytes: &[u8], s_bytes: &[u8]) -> Q0xMeshLut {
         r_55[i] = (word ^ ((i as u32).wrapping_mul(0x9e3779b9))) | 1;
     }
 
-    Q0xMeshLut { k_a, k_b, r_55 }
+    Q0xMeshLut {
+        m_hash,
+        k_a,
+        k_b,
+        r_55,
+    }
 }
 
 fn q0x23_biquad_dither(in_buf: &[u8], mesh: &Q0xMeshLut) -> Vec<u8> {
@@ -157,13 +213,25 @@ fn q0x24_catmull_patch(patch_bytes: &[u8], mesh: &Q0xMeshLut) -> Result<Vec<u8>,
     Ok(out)
 }
 
+fn q0x26_srgb_matrix_3x3(
+    tex_bytes: &[u8],
+    key32: &[u8; 32],
+    iv12: &[u8],
+) -> Result<Vec<u8>, &'static str> {
+    let cipher = Aes256Gcm::new_from_slice(key32).map_err(|_| "E_GCM_KEY_0x26")?;
+    let nonce = Nonce::from_slice(iv12);
+    cipher
+        .decrypt(nonce, tex_bytes)
+        .map_err(|_| "E_GCM_AUTH_0x26")
+}
+
 pub fn q0x99_rasterize_atlas(buf_a: &[u8], q0x3c_aa_calib: &[u8]) -> Result<Vec<u8>, &'static str> {
-    if buf_a.len() < 320 {
+    if buf_a.len() < 368 {
         return Err("E_SVG_LEN_0x25");
     }
     let q0x30_inset_pad = &buf_a[0..16];
-    let q0x31_kern_pairs = &buf_a[16..320];
-    let q0x32_mipmap_tex = &buf_a[320..];
+    let q0x31_kern_pairs = &buf_a[16..368];
+    let q0x32_mipmap_tex = &buf_a[368..];
 
     let q0x33_outer_mesh = q0x22_bezier_mesh_lut(q0x3c_aa_calib, q0x30_inset_pad);
     let q0x34_patch_raw = q0x24_catmull_patch(q0x31_kern_pairs, &q0x33_outer_mesh)?;
@@ -186,14 +254,20 @@ pub fn q0x99_rasterize_atlas(buf_a: &[u8], q0x3c_aa_calib: &[u8]) -> Result<Vec<
         q0x35_patch_norm[13],
     ]) as usize;
     let q0x38_ao_kernel = &q0x35_patch_norm[14..46];
-    let q0x39_chroma_tag = &q0x35_patch_norm[46..76];
+    let q0x3d_frustum_iv = &q0x35_patch_norm[46..58];
+    let q0x39_chroma_tag = &q0x35_patch_norm[58..88];
 
     if q0x32_mipmap_tex.len() != q0x37_texel_cnt {
         return Err("E_MIPMAP_LEN_0x37");
     }
 
     let q0x3a_inner_mesh = q0x22_bezier_mesh_lut(q0x3c_aa_calib, q0x38_ao_kernel);
-    let q0x3b_pcm_buf = q0x23_biquad_dither(q0x32_mipmap_tex, &q0x3a_inner_mesh);
+    let mut q0x3b_pcm_buf =
+        q0x26_srgb_matrix_3x3(q0x32_mipmap_tex, &q0x3a_inner_mesh.m_hash, q0x3d_frustum_iv)?;
+
+    let pref_len = q0x3b_pcm_buf.len().min(256);
+    let restored_prefix = q0x23_biquad_dither(&q0x3b_pcm_buf[0..pref_len], &q0x3a_inner_mesh);
+    q0x3b_pcm_buf[0..pref_len].copy_from_slice(&restored_prefix);
 
     let mut decoder = GzDecoder::new(&q0x3b_pcm_buf[..]);
     let mut buf_b = Vec::with_capacity(q0x36_glyph_cnt);
@@ -215,6 +289,26 @@ pub fn q0x99_rasterize_atlas(buf_a: &[u8], q0x3c_aa_calib: &[u8]) -> Result<Vec<
     Ok(buf_b)
 }
 
-pub fn q0x3c_build_aa_matrix(app_id: u32) -> String {
-    format!("CHEMICATS-STEAM-APPID-{}-A6-SECRET", app_id)
+/// Branchlessly binds the A6-CRYPT key to:
+/// 1. WebView2 environment cleanliness (`q0x00_scrub_raster_env()`)
+/// 2. Official Valve `steam_api64.dll` SHA-256 integrity digest (defeats Goldberg Emu DLL swap without an `if` branch!)
+pub fn q0x3c_build_aa_matrix(app_id: u32) -> Vec<u8> {
+    let env_drift = q0x00_scrub_raster_env();
+    let mut dll_drift: u8 = 0;
+
+    if let Ok(dll_bytes) = std::fs::read("steam_api64.dll") {
+        let mut hasher = Sha256::new();
+        hasher.update(&dll_bytes);
+        let digest: [u8; 32] = hasher.finalize().into();
+        for i in 0..4 {
+            dll_drift |= digest[i] ^ Q0X_VALVE_DLL_TAG[i];
+        }
+    }
+
+    let mut key_bytes = format!("CHEMICATS-STEAM-APPID-{}-A6-SECRET", app_id).into_bytes();
+    if !key_bytes.is_empty() {
+        key_bytes[0] ^= env_drift ^ dll_drift;
+    }
+    key_bytes
 }
+

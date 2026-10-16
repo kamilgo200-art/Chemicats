@@ -6,7 +6,7 @@ import {
   createSelfExtractingA6Html,
   stripDesktopControlsForAndroid,
 } from "./a6-crypt.mjs";
-import { applyRosettaCamouflage } from "./a6-rosetta.mjs";
+import { applyRosettaCamouflage, generateRosettaMasterTxt } from "./a6-rosetta.mjs";
 
 const css = fs.readFileSync("src/index.css", "utf8");
 const rawJs = fs.readFileSync("src/chemicats-v30-9.js", "utf8");
@@ -59,9 +59,26 @@ if (verifyAndroid.sourceSHA256 !== androidBuild.stats.sourceSHA256) {
 }
 fs.writeFileSync("public/game-android.a6", androidBuild.container);
 
+// 4. Auto-generate & update local plaintext Decryption & Rosetta Master Key (`A6_KLUCZ_ODSZYFROWUJACY_ROSETTA.txt`)
+const masterTxt = generateRosettaMasterTxt({
+  timestamp: new Date().toISOString(),
+  totalRosettaTokens,
+  webKB: (webBuild.stats.htmlBytes / 1024).toFixed(2),
+  sourceMB: (webBuild.stats.sourceBytes / 1024 / 1024).toFixed(2),
+  steamKB: (steamBuild.stats.containerBytes / 1024).toFixed(2),
+  steamSHA256: steamBuild.stats.sourceSHA256,
+  androidKB: (androidBuild.stats.containerBytes / 1024).toFixed(2),
+  androidSHA256: androidBuild.stats.sourceSHA256,
+  removedBindings,
+});
+fs.writeFileSync("A6_KLUCZ_ODSZYFROWUJACY_ROSETTA.txt", masterTxt, "utf8");
+
 console.log("=== A6-CRYPT + A6-ROSETTA Multi-Target Build Summary ===");
 console.log(
   `[A6-ROSETTA]   Camouflaged ${camouflagedMain.uniqueModulesCamouflaged} engine modules (${totalRosettaTokens} identifier occurrences rewritten to _q0x... decoys)`
+);
+console.log(
+  `[Master .txt]  A6_KLUCZ_ODSZYFROWUJACY_ROSETTA.txt updated (${(Buffer.byteLength(masterTxt, "utf8") / 1024).toFixed(2)} KB)`
 );
 console.log(
   `[Web HTML]     chemicats-packed.html : ${(webBuild.stats.htmlBytes / 1024).toFixed(2)} KB (${webBuild.stats.htmlBytes} B) -> unpacks in RAM to ${(webBuild.stats.sourceBytes / 1024 / 1024).toFixed(2)} MB`

@@ -1,0 +1,697 @@
+================================================================================
+   CHEMICATS v30.9 — GŁÓWNY KLUCZ ODSZYFROWUJĄCY A6-CRYPT + SŁOWNIK A6-ROSETTA
+================================================================================
+Ostatnia automatyczna aktualizacja : 2026-10-15T21:35:44.951Z
+Zakamuflowane moduły silnika       : 134 modułów (1462 wystąpień w kodzie)
+Zakamuflowane symbole loadera      : 39 symboli kryptograficznych i DOM
+Build Web (chemicats-packed.html)  : 908.37 KB -> rozpakowuje się w RAM do 2.23 MB
+Build Steam (public/game.a6)       : 729.79 KB (0% narzutu Base96, SHA-256: 615b13915c00d581d0c9728f3f66a031afac737d8e4c33d1d52a84394607cd91)
+Build Android (game-android.a6)    : 729.95 KB (wycięto 16 bindowań PC, SHA-256: 57ee9dc29fab4fc6aced85d5fc57543f310b2b727f1e40d65bb9bddefc090456)
+UWAGA: Ten plik (.txt) leży wyłącznie lokalnie obok kodu źródłowego projektu.
+       NIGDY nie jest pakowany do plików wynikowych .html ani .a6!
+================================================================================
+
+--------------------------------------------------------------------------------
+CZĘŚĆ 1. GOTOWA WIADOMOŚĆ DO SKOPIOWANIA I WKLEJENIA DLA AI (PROMPT ODBLOKOWUJĄCY)
+--------------------------------------------------------------------------------
+Skopiuj poniższy blok i wklej go do dowolnego AI (Gemini / Claude / ChatGPT),
+gdy będziesz chciał w przyszłości edytować lub analizować zabezpieczony kod:
+
+=== POCZĄTEK WIADOMOŚCI DLA AI ===
+Analizujesz kod gry Chemicats zabezpieczony hybrydowym protokołem polimorficznym
+A6-CRYPT v2 (5 warstw: Gzip -> Wybielanie nagłówka LFG S_n=(S_{n-24}+S_{n-55}) mod 2^32 + S-Box ->
+Sprzętowe szyfrowanie wsadu AES-256-GCM z 96-bitowym IV i 128-bitowym tagiem GHASH ->
+Dynamiczne Klastry Fibonacciego K_1/K_2 z Regułą Zera c1*c2*c3+c4 i biasem F_11=89
+chroniące 256-bitowy klucz sesyjny AES oraz IV -> zmiennobitowe Base96 13/14-bit ->
+uruchamianie Zero-document.write przez jednorazowy Blob URL z zerowaniem bufora RAM .fill(0))
+oraz kamuflażem semantycznym A6-ROSETTA.
+
+Zignoruj zmyłkowe sufiksy CSS/DOM/SVG/Font/Spline w nazwach zaczynających się od `_q0x`!
+W tym kodzie prefiks `_q0x` oznacza celowo podstawioną fałszywą nazwę semantyczną
+(Adversarial Semantic Decoy). Użyj poniższej tablicy A6-ROSETTA, aby przetłumaczyć
+wszystkie identyfikatory `_q0x...` z powrotem na prawdziwe moduły silnika i kryptografii:
+
+[1. Symbole Loadera Kryptograficznego A6-CRYPT]:
+  _q0x0a_ariaLiveRegion        => chem-boot-status             | Element DOM <p> wyświetlający status rozruchu przed document.write()
+  _q0x0b_svgGlyphStream        => chem-packed                  | Tag <script type='application/octet-stream'> przechowujący strumień Base96 kontenera A6-CRYPT
+  __Q0X_SUBPIXEL_AA_MATRIX__   => __A6_HARDWARE_KEY__          | Globalny rejestr w pamięci RAM, do którego natywny kod (Kotlin APK / Rust Steam) wstrzykuje klucz sprzętowy/certyfikatowy
+  __Q0X_POINTER_COARSE_LOCK__  => __A6_ANDROID_TOUCH_ONLY__    | Flaga wymuszająca tryb wyłącznie dotykowy po fizycznej kastracji sterowania PC w buildzie Android
+  _q0x99_fontAtlasMetrics      => ChemPackedBoot               | Globalny zamrożony obiekt diagnostyczny przechowujący czasy dekodowania RAM i sumy kontrolne SHA-256
+  _q0x10_splineKnotA           => BASE_F_K1                    | Bazowa tablica Fibonacciego Klastra K_1 (wypełniacz precyzyjny: [0, 1, 2, 3, 5, 8, 13, 21, 34, 55])
+  _q0x11_splineKnotB           => BASE_F_K2                    | Bazowa tablica Fibonacciego Klastra K_2 z Regułą Zera ([0, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181])
+  _q0x12_srgbChromaLut         => K_SHA                        | 64 stałe rund kompresji kryptograficznej SHA-256 (0x428a2f98..0xc67178f2), zamaskowane jako tablica chrominancji sRGB
+  _q0x20_lerp                  => rotr                         | 32-bitowa rotacja bitowa w prawo (ROTR) używana wewnątrz funkcji skrótu SHA-256
+  _q0x21_glyphKernBox          => sha256Bytes                  | Czysta implementacja kryptograficzna SHA-256 w pamięci RAM (generuje 256-bitowy skrót z klucza, soli i rozpakowanego kodu)
+  _q0x22_bezierMeshLut         => deriveKeyMaterial            | Warstwa 3 (KDF + S-Box): rozwija klucz SHA-256 w 256 bajtów strumienia, tasuje permutacje Fisher-Yates dla S-Boxów K_1 i K_2 oraz inicjalizuje 55 słów generatora LFG
+  _q0x23_biquadDither          => unwhitenStream               | Warstwa 2 (Wybielanie LFG + XOR + ROR8): cofa rotację bitową i maskę XOR opóźnionego generatora Fibonacciego S_n = (S_{n-24} + S_{n-55}) mod 2^32 połączonego z nieliniowym S-Boxem K_1/K_2
+  _q0x24_catmullPatch          => decodeClustersO1             | Warstwa 4 (Dekoder Klastrów A6-CRYPT w czasie O(1)): rozpakowuje 32-bitowe czwórki (K_1, K_2) równaniem c1*c2*c3+c4 z Regułą Zera i odejmuje bias ciągłości F_11 = 89
+  _q0x25_svgPathParse          => base96                       | Dekoder zmiennobitowego kodowania tekstowego Base96 (13/14 bitów na parę znaków ASCII)
+  _q0x26_srgbMatrix3x3         => decryptAesGcmHybrid          | Warstwa 2b (Sprzętowe AES-256-GCM WebCrypto crypto.subtle.decrypt + algebraiczny fallback GF(2^8) dla file://, zamaskowane jako macierz kolorów 3x3 sRGB)
+  _q0x27_findAsciiSeq          => findBinaryTagSlice           | Binarny skaner Uint8Array wycinający sekcje <style> i <script> prosto do efemerycznego Blob URL (eliminuje document.write() oraz obecność kodu w outerHTML!)
+  _q0x28_wasmCore              => wasmClusterCore              | Skompilowany binarny moduł WebAssembly (.wasm, 54 B) wykonujący równanie klastrów Fibonacciego c1*c2*c3+c4-bias na płaskich rejestrach i32.mul/i32.add/i32.sub
+  _q0x29_selfIntegrityDrift    => selfIntegrityDrift           | Bezrozgałęzieniowy strażnik JS: bada deskryptory Object.getOwnPropertyDescriptor(Document.prototype,'write'), zamraża URL, liczy sumę kontrolną własnego kodu dekodera oraz pułapkę czasową debuggera i XOR-uje wynik z kluczem S-Boxa
+  _q0x2a_scrubRamBuffer        => scrubRamBuffer               | Niszczyciel buforów RAM: nadpisuje odszyfrowane tablice Uint8Array kryptograficznym szumem crypto.getRandomValues() oraz zerami .fill(0) natychmiast po utworzeniu jednorazowego Blob URL
+  q0x00_scrub_raster_env       => scrubWebView2Env             | Natywny strażnik Rust (Steam/Tauri): czyści zmienne środowiskowe WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS / --remote-debugging-port przed startem WebView2 i zatruwa klucz przy próbie podpięcia DevTools
+  q0x3fSampleSubpixelNoise     => sampleAntiFridaNoise         | Natywny strażnik Kotlin (Android APK): bezrozgałęzieniowo bada /proc/self/maps (Frida/Xposed/Substrate) i TracerPid, mieszając wynik bezpośrednio do klucza S-Boxa
+  _q0x3c_aaCalib               => rawKey                       | Aktywny klucz deszyfrujący w pamięci RAM (połączony bezrozgałęzieniowo z detektorem hooków Frida / integralnością steam_api64.dll / certyfikatem APK)
+  _q0x30_insetPad              => outerSalt                    | Pierwsze 16 bajtów kontenera [0..15]: losowa sól zewnętrzna dla S-Boxa nagłówka
+  _q0x31_kernPairs             => headerClusters               | Bajty [16..367] (352 B): polimorficzny 88-bajtowy nagłówek zakodowany w parach klastrów Fibonacciego (K_1 + K_2 z Regułą Zera)
+  _q0x32_mipmapTex             => aesGcmPayload                | Bajty [368..EOF]: główny skompresowany wsad gry zaszyfrowany sprzętowym AES-256-GCM (+ 16B tag autoryzacji GHASH) z wybielonym przez LFG+S-Box nagłówkiem Gzip
+  _q0x33_outerMesh             => outerKeyMat                  | Zewnętrzny materiał klucza (S-Box K_1/K_2 + LFG) wyprowadzony z klucza głównego i outerSalt
+  _q0x34_patchRaw              => headerWhitened               | 88-bajtowy nagłówek po zdekodowaniu klastrów Fibonacciego O(1), przed zdjęciem wybielania LFG
+  _q0x35_patchNorm             => headerPlain                  | 88-bajtowy odszyfrowany nagłówek binarny zawierający magic 'A6CR', rozmiary, 32B sessionSeed, 12B wektor IV AES-GCM i 240-bitowy tag SHA-256
+  _q0x36_glyphCnt              => expectedSourceLen            | Oczekiwany rozmiar rozpakowanego kodu gry w bajtach (offset [6..9] nagłówka)
+  _q0x37_texelCnt              => expectedCompLen              | Oczekiwany rozmiar zaszyfrowanego strumienia AES-256-GCM wraz z 16B tagiem autoryzacji (offset [10..13] nagłówka)
+  _q0x38_aoKernel              => sessionSeed                  | 32-bajtowy jednorazowy klucz sesyjny (offset [14..45] nagłówka) wyprowadzający 256-bitowy klucz AES-GCM oraz wewnętrzny S-Box/LFG
+  _q0x3d_frustumIv             => aesGcmIv                     | 12-bajtowy (96-bitowy) losowy wektor inicjalizujący IV dla sprzętowego szyfru AES-256-GCM (offset [46..57] nagłówka klastrowego)
+  _q0x39_chromaTag             => expectedShaPrefix            | 30-bajtowy (240-bitowy) prefiks skrótu SHA-256 oryginału (offset [58..87] nagłówka) weryfikujący integralność po dekompresji
+  _q0x3a_innerMesh             => innerKeyMat                  | Wewnętrzny materiał klucza (256-bitowy klucz AES-GCM _mH + S-Box K_1/K_2 + LFG) wyprowadzony z klucza głównego i 32-bajtowego sessionSeed
+  _q0x3b_pcmBuf                => gzBytes                      | Odszyfrowany strumień Gzip w pamięci RAM tuż przed przekazaniem do DecompressionStream('gzip') (zerowany przez .fill(0) natychmiast po dekompresji)
+  E_GLYPH_KERN_0x71            => ERR_CLUSTER_INTEGRITY        | Błąd autoryzacji klastrów K_1+K_2 (wynik poza przedziałem 0..255 — zły klucz S-Boxa, wykryty hook Frida/DevTools lub podmieniony steam_api64.dll)
+  E_BEZIER_HDR_0x41            => ERR_HEADER_MAGIC             | Błąd sygnatury 'A6CR' (0x41 0x36 0x43 0x52) wewnątrz odszyfrowanego nagłówka klastrowego
+  E_MIPMAP_LEN_0x37            => ERR_PAYLOAD_LEN              | Niezgodność rozmiaru zaszyfrowanego wsadu z polem expectedCompLen w nagłówku
+  E_CHROMA_TAG_0x39            => ERR_SHA256_TAG               | Błąd weryfikacji 240-bitowej sumy kontrolnej SHA-256 po rozpakowaniu w pamięci RAM
+
+[2. Moduły Silnika Gry Chemicats (134 modułów)]:
+  _q0x01a_cssBoxSizing         => ChemGPU                      | [GPU & Render] Silnik WebGL2 WARL (rozmycie pola energii i mapowanie tonów sRGB na GPU z automatycznym fallbackiem CPU)
+  _q0x02b_domScrollSnap        => ChemSuper                    | [GPU & Render] Główny akcelerator pakietów fotonowych i promieni WebGL2 (tryby PC 128 źródeł / Extreme 512 źródeł, odbicia i refrakcja)
+  _q0x03c_svgViewBoxFit        => ChemGraphics                 | [GPU & Render] Menedżer profili graficznych, skalowania rozdzielczości, limitów klatek i budżetu cieniowania
+  _q0x04d_cssKeyframeLerp      => ChemFXAnim                   | [GPU & Render] System animacji cząsteczkowych, rozbłysków reakcji, smug pocisków i efektów trafień
+  _q0x05e_ariaMotionPref       => ChemAnimationPolicy          | [GPU & Render] Polityka płynności animacji, redukcji ruchu i adaptacji klatek pod urządzenia mobilne i PC
+  _q0x06f_glyphSubpixelAa      => ChemAtlasEffects             | [GPU & Render] Efekty wizualne atlasu pierwiastków, poświaty izotopów i wizualizacje orbitali
+  _q0x07a_rectClipBounds       => ChemVerifiedEffects          | [GPU & Render] Walidator poprawności efektów specjalnych i stanów wizualnych po reakcjach chemicznych
+  _q0x10a_domAriaLayout        => ChemCombat                   | [Walka i Fizyka] Główna pętla walki, obrażeń, kolizji pocisków, i-frame'ów oraz idealnego uniku (złote goko/pierd przy idealnym uniku)
+  _q0x11b_flexRowGutter        => ChemCombatFlow               | [Walka i Fizyka] Sterownik tempa starć, fal przeciwników, przejść między pokojami i dynamiki agresji
+  _q0x12c_textEllipsisWrap     => ChemCombatPolish             | [Walka i Fizyka] Dopracowanie odczuć walki (hit-stop, odrzut, złota poświata idealnego uniku, feedback trafień)
+  _q0x13d_mediaAspectCrop      => ChemCombatTrailer            | [Walka i Fizyka] Sekwencje pokazowe i dynamiczne kamery/efekty w kulminacyjnych momentach starć
+  _q0x14e_fontGlyphKern        => ChemWeapons                  | [Walka i Fizyka] Arsenał broni chemicznych, statystyki strzałów, zużycie amunicji/energii i modyfikatory żywiołów
+  _q0x15f_selectOptionNode     => ChemWeaponChoice             | [Walka i Fizyka] Interfejs i logika wyboru oraz przełączania broni przed i w trakcie runu
+  _q0x16a_svgStrokeDash        => ChemUpgrades                 | [Walka i Fizyka] Drzewko ulepszeń za protony, elektrony i neutrony oraz skalowanie statystyk gracza
+  _q0x17b_cssFlexMargin        => ChemRevive                   | [Walka i Fizyka] System wykupienia powrotu do życia za protony (skalowany zależnie od piętra i liczby wcześniejszych wskrzeszeń w runie)
+  _q0x18c_bezierTangentLut     => ChemBossRush                 | [Walka i Fizyka] Tryb Boss Rush (odblokowywany po przejściu do 3. piętra, kolejne areny bossów i nagrody)
+  _q0x19d_canvasPathArc        => ChemBossDeaths               | [Walka i Fizyka] Sekwencje śmierci bossów, eksplozje rdzeni i wypłaty elektronów/neutronów (1 / 5 / 10 / 20 / 40 za kolejnych bossów)
+  _q0x1ae_borderRadiusPx       => ChemEnemyDeaths              | [Walka i Fizyka] Logika pokonania zwykłych wrogów, dropów materii i rozpadu cząsteczkowego
+  _q0x1bf_gridAutoColumns      => ChemEnemyNav                 | [Walka i Fizyka] Sztuczna inteligencja poruszania się wrogów, omijania przeszkód i okrążania gracza
+  _q0x1c0_outlineOffsetEm      => ChemEnemyWarnings            | [Walka i Fizyka] Wskaźniki ostrzegawcze o nadchodzących atakach spoza ekranu i szarżach wrogów
+  _q0x1d1_caretColorStyle      => ChemAttackTelegraphs         | [Walka i Fizyka] Telegrafowanie obszarów rażenia bossów i wrogów (strefy niebezpieczeństwa na podłodze)
+  _q0x1e2_pointerEventsNone    => ChemHostileTrace             | [Walka i Fizyka] Śledzenie trajektorii wrogich pocisków i promieni zagrożenia
+  _q0x1f3_userSelectNone       => ChemCatDeaths                | [Walka i Fizyka] Obsługa utraty życia przez kota gracza i animacja ratunkowa/upadku
+  _q0x204_listStyleType        => ChemAuxDeaths                | [Walka i Fizyka] Obsługa zniszczenia obiektów pomocniczych, dronów, wieżyczek i pułapek
+  _q0x215_boxShadowSpread      => ChemDeathBurst               | [Walka i Fizyka] Fala uderzeniowa i rozrzut cząstek przy śmierci jednostek
+  _q0x226_filterSepiaTone      => ChemDeathFX                  | [Walka i Fizyka] Efekty wizualne ekranu śmierci i spowolnienia czasu (slow-motion)
+  _q0x237_dialogBackdrop       => ChemDeathPanel               | [Walka i Fizyka] Ekran podsumowania po zgonie (opcja wskrzeszenia za protony lub powrót do bazy)
+  _q0x248_overflowClipBox      => ChemDeathPolicy              | [Walka i Fizyka] Reguły zachowania ekwipunku, walut i postępu po śmierci gracza
+  _q0x259_tableCellAlign       => ChemDeathReview              | [Walka i Fizyka] Analiza przyczyny zgonu (co zadało ostatnie obrażenia i raport obrażeń)
+  _q0x30a_fontVariantNum       => ChemPeriodic                 | [Chemia i Fizyka Materii] Układ okresowy pierwiastków, właściwości atomowe, masy (w tym ciekawostka 1836 m_p/m_e) i konfiguracje
+  _q0x31b_unicodeBidiIso       => ChemPeriodicSymbols          | [Chemia i Fizyka Materii] Symbole, kolory i oznaczenia pierwiastków chemicznych w UI oraz świecie gry
+  _q0x32c_marginCollapse       => ChemMatter                   | [Chemia i Fizyka Materii] Rdzeń symulacji materii, gęstości, stanów skupienia i interakcji substancji
+  _q0x33d_backgroundClip       => ChemMatterVisual             | [Chemia i Fizyka Materii] Renderowanie cieczy, gazów, osadów i kryształów na planszy
+  _q0x34e_borderCollapse       => ChemMaterialState            | [Chemia i Fizyka Materii] Przejścia fazowe materiałów (topnienie, parowanie, sublimacja, krzepnięcie)
+  _q0x35f_zIndexStacking       => ChemPhase                    | [Chemia i Fizyka Materii] Zarządzanie fazami fizycznymi i stanami reaktywności w pokojach
+  _q0x36a_paddingInline        => ChemWallMatter               | [Chemia i Fizyka Materii] Właściwości materiałowe ścian (przewodnictwo, odbijanie światła, korozja kwasowa, niszczenie)
+  _q0x37b_colorSchemeDark      => ChemThermalState             | [Chemia i Fizyka Materii] Symulacja temperatury, przewodnictwa cieplnego, zapłonu i wychłodzenia
+  _q0x38c_textIndentCalc       => ChemReactionTrace            | [Chemia i Fizyka Materii] Rejestrator przebiegu reakcji chemicznych i bilansu energetycznego
+  _q0x39d_radialGradStop       => ChemReactionPlum             | [Chemia i Fizyka Materii] Chmury oparów, dymu i toksycznych wyziewów powstających w wyniku reakcji
+  _q0x3ae_cubicBezierPts       => ChemBondMotion               | [Chemia i Fizyka Materii] Dynamika drgań wiązań chemicznych i sprężystości cząsteczek
+  _q0x3bf_svgPolygonPts        => ChemBondStructures           | [Chemia i Fizyka Materii] Topologia wiązań kowalencyjnych, jonowych i metalicznych
+  _q0x3c0_gridTemplateArea     => ChemLab                      | [Chemia i Fizyka Materii] Laboratorium chemiczne gracza (syntetyzowanie związków, badania i testy)
+  _q0x3d1_flexBasisAuto        => ChemElectric                 | [Chemia i Fizyka Materii] Symulacja prądu elektrycznego, napięcia, łuków elektrycznych i elektrolizy
+  _q0x3e2_strokeMiterLim       => ChemElectricFX               | [Chemia i Fizyka Materii] Renderowanie wyładowań, błyskawic i spięć na przewodnikach
+  _q0x3f3_eventTargetBind      => ChemElectricHooks            | [Chemia i Fizyka Materii] Wyzwalacze środowiskowe reagujące na przepływ prądu (otwieranie bramek, cewki)
+  _q0x404_radioGroupCheck      => ChemElectricChoice           | [Chemia i Fizyka Materii] Wybór modyfikatorów i obwodów elektrycznych w trakcie rozgrywki
+  _q0x415_columnGapRule        => ChemConductionRoom           | [Chemia i Fizyka Materii] Specjalne pokoje zagadek i walk opartych na przewodnictwie elektrycznym i cieczach
+  _q0x426_fontStretchCond      => ChemEnergyIsotope            | [Chemia i Fizyka Materii] Mechanika rozpadu promieniotwórczego izotopów i emisji energii
+  _q0x437_lineHeightNorm       => ChemEnergyPressure           | [Chemia i Fizyka Materii] Mechanika ciśnienia gazów, fali uderzeniowej i dekompresji
+  _q0x448_letterSpacingEm      => ChemEnergyVoltage            | [Chemia i Fizyka Materii] Mechanika potencjału elektrochemicznego i ogniw galwanicznych
+  _q0x459_dropShadowBlur       => ChemHydrogenShadow           | [Chemia i Fizyka Materii] Specjalny stan kwantowego cienia wodorowego / tunelowania
+  _q0x50a_mediaQueryMatch      => ChemBiomes                   | [Świat, Biomy i Księga] Definicje biomów, palet kolorystycznych, zagrożeń środowiskowych i pięter
+  _q0x51b_aspectRatioBox       => ChemRoomShapes               | [Świat, Biomy i Księga] Generator geometrii pokoi, korytarzy, filarów i przeszkód
+  _q0x52c_borderImageSlice     => ChemRoomGates                | [Świat, Biomy i Księga] Logika drzwi, śluz między pokojami, blokad na czas walki i przejść na kolejne piętro
+  _q0x53d_captionSideTop       => ChemBestiary                 | [Świat, Biomy i Księga] Bestiariusz wrogów i bossów wraz ze statystykami, odpornościami i opisami
+  _q0x54e_counterResetIdx      => ChemKnowledge                | [Świat, Biomy i Księga] Baza wiedzy chemicznej, odkrytych reakcji i ciekawostek naukowych
+  _q0x55f_cardPaddingBox       => ChemKnowledgeCard            | [Świat, Biomy i Księga] Komponent wizualny pojedynczej karty wiedzy/ciekawostki chemicznej
+  _q0x56a_bookSpineLayout      => ChemBook                     | [Świat, Biomy i Księga] Główny interfejs Księgi Alchemii / Chemii (encyklopedia przepisów i związków)
+  _q0x57b_tabNavHeader         => ChemBookCategory             | [Świat, Biomy i Księga] Kategorie działów w Księdze Chemii
+  _q0x58c_subTabItemNode       => ChemBookSubcategory          | [Świat, Biomy i Księga] Podkategorie związków chemicznych w Księdze
+  _q0x59d_spanInlineBlock      => ChemBookComposition          | [Świat, Biomy i Księga] Widok składu stechiometrycznego cząsteczek w Księdze
+  _q0x5ae_svgLineCapRound      => ChemBookStructure            | [Świat, Biomy i Księga] Rysowanie wzorów strukturalnych cząsteczek w Księdze
+  _q0x5bf_domNodeWrapper       => ChemBookEl                   | [Świat, Biomy i Księga] Kontener DOM elementów Księgi Chemii
+  _q0x5c0_styleSheetMount      => ChemBookInstallStyle         | [Świat, Biomy i Księga] Dynamiczne arkusze stylów dla Księgi Chemii
+  _q0x5d1_anchorBookmark       => ChemBookMark                 | [Świat, Biomy i Księga] Zakładki w Księdze Chemii do szybkiego przełączania stron
+  _q0x5e2_gridCellSpan         => ChemBookNonmetals            | [Świat, Biomy i Księga] Sekcja niemetali i ich reaktywności w Księdze
+  _q0x5f3_flexWrapShelf        => ChemBookShelves              | [Świat, Biomy i Księga] Widok półek z odczynnikami w Księdze
+  _q0x604_tableRowStripe       => ChemBookSodiumWaterRecipes   | [Świat, Biomy i Księga] Specjalne receptury reakcji metali alkalicznych (np. sód + woda -> eksplozja)
+  _q0x615_badgePillOffset      => ChemBookSpecial              | [Świat, Biomy i Księga] Receptury specjalne i egzotyczne związki w Księdze
+  _q0x626_tooltipArrowPos      => ChemRecipeHints              | [Świat, Biomy i Księga] System podpowiedzi do nieodkrytych jeszcze reakcji chemicznych
+  _q0x637_hintBoxShadow        => ChemRecipeHintCard           | [Świat, Biomy i Księga] Karta podpowiedzi receptury w UI
+  _q0x648_btreeIndexLut        => ChemRecipeIndex              | [Świat, Biomy i Księga] Indeks wyszukiwania wszystkich receptur chemicznych
+  _q0x659_statBarFillPct       => ChemRecipeStats              | [Świat, Biomy i Księga] Statystyki użycia i siły poszczególnych receptur
+  _q0x66a_toastSlideIn         => ChemRecentReactionCard       | [Świat, Biomy i Księga] Powiadomienie/karta ostatnio przeprowadzonej reakcji chemicznej
+  _q0x67b_navOverflowMenu      => ChemExtraCategories          | [Świat, Biomy i Księga] Dodatkowe kategorie klasyfikacji obiektów i reakcji
+  _q0x68c_legacyGridV25        => ChemV25Categories            | [Świat, Biomy i Księga] Rozszerzenia kategorii wprowadzone w wersji 25 silnika
+  _q0x69d_legacyGridV26        => ChemV26Categories            | [Świat, Biomy i Księga] Rozszerzenia kategorii wprowadzone w wersji 26 silnika
+  _q0x6ae_poolBufferAlloc      => ChemLegacyReserveCandidates  | [Świat, Biomy i Księga] Pula rezerwowych definicji i wariantów kompatybilności wstecznej
+  _q0x6bf_anisoRoughnessLut    => ChemEnemyReactivity          | [Walka, Fizyka i Reakcje] Silnik specyficznej reaktywności chemicznej 30 wrogów i bossów na poszczególne atomy układu okresowego oraz związki chemiczne (Popcorn, Klatrat Skrobia-Jod, Przejście Szkliste Tg, Szok pH, Denaturacja Białek, Przewodnictwo Segmentowe, EMP Fiskalne)
+  _q0x70a_audioCtxGain         => ChemMusicPlayback            | [Audio i Muzyka Proceduralna] Główny odtwarzacz i syntezator Web Audio API generujący muzykę w czasie rzeczywistym (0 MB plików MP3)
+  _q0x71b_fftSpectrumBin       => ChemMusicStats               | [Audio i Muzyka Proceduralna] Telemetria odtwarzania muzyki, analizator widma i ranking utworów
+  _q0x72c_crossfadeCurve       => ChemMusicTransitions         | [Audio i Muzyka Proceduralna] Płynne przejścia (crossfade) między muzyką eksploracji, walki i bossów
+  _q0x73d_oscDetuneCent        => ChemBiomeMusic               | [Audio i Muzyka Proceduralna] Proceduralne ścieżki dźwiękowe przypisane do poszczególnych biomów
+  _q0x74e_sawtoothWaveLut      => ChemNeonMusic                | [Audio i Muzyka Proceduralna] Syntezator utworów synthwave/neon (NeonDance, LabRave, ElectronDawn)
+  _q0x75f_pulseWidthMod        => ChemHeartMusic               | [Audio i Muzyka Proceduralna] Silnik muzyczny utworu Heart Reactor i motywów rdzenia
+  _q0x76a_chorusDelayTap       => ChemAnthemMusic              | [Audio i Muzyka Proceduralna] Generator hymnu głównego i motywów przewodnich gry
+  _q0x77b_karplusStrong        => ChemGuitarVoice              | [Audio i Muzyka Proceduralna] Fizyczny model syntezy przesterowanej gitary elektrycznej i riffów metalowych
+  _q0x78c_riffSequencer        => ChemGuitarSong               | [Audio i Muzyka Proceduralna] Sekwencer bojowych utworów gitarowych i metalowych
+  _q0x79d_masterBusComp        => ChemOriginalTrack            | [Audio i Muzyka Proceduralna] Odtwarzacz klasycznych/oryginalnych aranżacji ścieżki dźwiękowej
+  _q0x7ae_playlistIndex        => ChemTrackCatalog             | [Audio i Muzyka Proceduralna] Pełny katalog ścieżek dźwiękowych dostępnych w grze i odtwarzaczu
+  _q0x7bf_tempoBpmTick         => ChemTrackStepLength          | [Audio i Muzyka Proceduralna] Przelicznik długości kroków sekwencera względem BPM utworu
+  _q0x7c0_tunerDialKnob        => ChemRadio                    | [Audio i Muzyka Proceduralna] Wewnątrzgrowe radio pozwalające przełączać stacje i utwory podczas gry
+  _q0x7d1_biquadResonance      => ChemAudioFX                  | [Audio i Muzyka Proceduralna] Generator efektów dźwiękowych SFX (strzały, wybuchy, reakcje, interfejs)
+  _q0x7e2_decibelGainMap       => ChemAudioLevels              | [Audio i Muzyka Proceduralna] Mikser głośności (Master, Muzyka, SFX) i kompresja dynamiki
+  _q0x7f3_mountMediaTray       => initChemAudioPlayer          | [Audio i Muzyka Proceduralna] Inicjalizator mobilnego/desktopowego odtwarzacza Chemicats Music (tryb Spotify/YT Music + gra w tle z MediaSession)
+  _q0x80a_focusRingStyle       => ChemInputView                | [Sterowanie i Interfejs] Warstwa abstrakcji wejścia (automatyczne wykrywanie: dotyk / mysz+klawiatura / pad)
+  _q0x81b_touchActionPan       => ChemTouchControls            | [Sterowanie i Interfejs] Wirtualne gałki (twin-stick) i przyciski dotykowe na ekranach mobilnych (Android/iOS)
+  _q0x82c_hitSlopRadius        => ChemTouchSettings            | [Sterowanie i Interfejs] Konfiguracja rozmiaru, czułości i rozmieszczenia przycisków dotykowych
+  _q0x83d_cursorCrosshair      => ChemAim                      | [Sterowanie i Interfejs] System celowania, wspomagania celowania (aim-assist) i wektorów strzału
+  _q0x84e_pointerLockDelta     => ChemAimControls              | [Sterowanie i Interfejs] Ustawienia czułości celownika, martwych stref i trybu celowania
+  _q0x85f_gamepadAxisMap       => ChemPad                      | [Sterowanie i Interfejs] Obsługa kontrolerów (Gamepad API: Xbox, DualSense, Steam Deck) i wibracji
+  _q0x86a_buttonGlyphSvg       => ChemPadHelp                  | [Sterowanie i Interfejs] Podpowiedzi przypisania przycisków kontrolera na ekranie
+  _q0x87b_radialMenuArc        => ChemWheel                    | [Sterowanie i Interfejs] Kołowe menu szybkiego wyboru broni i odczynników
+  _q0x88c_tabIndexOrder        => ChemPanelFocus               | [Sterowanie i Interfejs] Zarządzanie fokusem nawigacji w oknach modalnych i menu
+  _q0x90a_intlLocalePlural     => ChemicatsSave                | [Zapis, UI i System] Główny menedżer zapisu stanu gry (waluty, odblokowania, postęp pięter, eksport/import sejwa)
+  _q0x91b_idleCallbackTick     => ChemAutoSave                 | [Zapis, UI i System] Automatyczny zapis postępu między pokojami i piętrami
+  _q0x92c_jsonSchemaCheck      => ChemSaveTools                | [Zapis, UI i System] Narzędzia migracji, naprawy i weryfikacji integralności plików zapisu
+  _q0x93d_contrastRatioAa      => ChemReadability              | [Zapis, UI i System] System czytelności i responsywnego skalowania UI na różnych urządzeniach (telefony, tablety, monitory 4K)
+  _q0x94e_fontSizeClamp        => ChemReadabilityPanel         | [Zapis, UI i System] Panel ustawień skali interfejsu, kontrastu tła i grubości czcionek
+  _q0x95f_ariaDescribedBy      => ChemAccessibility            | [Zapis, UI i System] Ułatwienia dostępu (tryby dla daltonistów, redukcja błysków, wzmocnienie konturów)
+  _q0x96a_roleSwitchNode       => ChemAccessibilityPanel       | [Zapis, UI i System] Menu konfiguracji ułatwień dostępu
+  _q0x97b_langTagBcp47         => ChemI18n                     | [Zapis, UI i System] System tłumaczeń dwujęzycznych (Polski / Angielski)
+  _q0x98c_heroBannerFlex       => ChemWelcome                  | [Zapis, UI i System] Ekran powitalny, samouczek wprowadzający i wybór początkowy
+  _q0x99d_avatarBadgeClip      => ChemCharacterIdentity        | [Zapis, UI i System] Dane postaci/kotów (statystyki bazowe, umiejętności pasywne, historia)
+  _q0x9ae_profileCardGrid      => ChemCharacterIdentityCard    | [Zapis, UI i System] Karta wyboru postaci w menu
+  _q0x9bf_creditsScrollY       => ChemEnding                   | [Zapis, UI i System] Logika zakończenia gry po pokonaniu ostatniego bossa (wypłata 40 waluty i finał)
+  _q0x9c0_spriteStagePos       => ChemEndingActors             | [Zapis, UI i System] Postacie i animacje występujące w scenie finałowej
+  _q0x9d1_epilogueStyle        => ChemEndingCSS                | [Zapis, UI i System] Arkusze stylów ekranu finałowego
+  _q0x9e2_epilogueTextBlock    => ChemEndingCopy               | [Zapis, UI i System] Teksty fabularne epilogu i podsumowania zwycięstwa
+  _q0x9f3_epilogueRootDom      => ChemEndingEl                 | [Zapis, UI i System] Główny kontener DOM sceny końcowej
+  _q0xa04_cinemaLetterbox      => ChemEndingScene              | [Zapis, UI i System] Reżyser sceny finałowej i efektów cząsteczkowych zakończenia
+  _q0xa15_modalOverlayEnd      => ChemEndingScreen             | [Zapis, UI i System] Ekran statystyk końcowych po ukończeniu gry
+  _q0xa26_summaryButtonRow     => ChemEndingUI                 | [Zapis, UI i System] Przyciski nawigacji po ukończeniu gry (Nowa Gra+, Boss Rush, Menu)
+  _q0xa37_timerBadgeTick       => ChemTrial                    | [Zapis, UI i System] System wyzwań czasowych i prób laboratoryjnych
+  _q0xa48_bridgePostMsg        => ChemSDK                      | [Zapis, UI i System] Most integracyjny SDK platform zewnętrznych (osiągnięcia, chmura, kontenery natywne)
+  _q0xa59_cookieConsentUi      => ChemicatsPrivacy             | [Zapis, UI i System] Polityka prywatności i lokalnego przetwarzania danych offline
+  _q0xa6a_storageQuotaApi      => ChemicatsPrivacyBridge       | [Zapis, UI i System] Most uprawnień pamięci lokalnej dla WebView / Capacitor
+  _q0xa7b_rtcPeerChannel       => ChemLAN                      | [Zapis, UI i System] Moduł sesji lokalnej / wymiany danych w sieci lokalnej
+  _q0xa8c_statusPillTop        => ChemLANBanner                | [Zapis, UI i System] Pasek informacyjny stanu połączenia LAN
+  _q0xa9d_peerListModal        => ChemLANPanel                 | [Zapis, UI i System] Panel konfiguracji połączenia lokalnego
+  _q0xaae_packetSyncLoop       => ChemLANSession               | [Zapis, UI i System] Synchronizacja stanu sesji LAN
+  _q0xabf_netPortConfig        => ChemLANSettings              | [Zapis, UI i System] Ustawienia protokołu lokalnego
+  _q0xacf_vramSlabPool         => ChemRAMCache                 | [Silnik Graficzny i Raytracing] Detektor pamięci RAM/CPU, sekwencyjny mikro-benchmark przeciążeniowy oraz bufor tekstur i grafik w pamięci RAM
+  _q0xad0_vramSlabForm         => ChemRAMCachePanel            | [Zapis, UI i System] Panel diagnostyki pamięci RAM, sekwencyjnej mikro-kalibracji i bufora grafik w ustawieniach
+=== KONIEC WIADOMOŚCI DLA AI ===
+
+--------------------------------------------------------------------------------
+CZĘŚĆ 2. SPECYFIKACJA MATEMATYCZNA SZYFRU A6-CRYPT v2 HYBRID (JAK DZIAŁA DEKODOWANIE)
+--------------------------------------------------------------------------------
+1. Warstwa 5 (Tekstowa — tylko w pliku .html): Zmiennobitowe Base96 (13/14-bit)
+   - Alfabet liczy 96 bezpiecznych znaków ASCII: Tab (9), LF (10), oraz kody 32..126
+     z wykluczeniem znaku '<' (kod 60), aby nigdy nie zamknąć tagu <script>.
+   - Para znaków daje 96 * 96 = 9216 stanów (13 lub 14 bitów). Narzut wynosi ~21.9% zamiast 33.3% (Base64).
+   - W plikach binarnych (`public/game.a6`, `public/game-android.a6`) ta warstwa jest pomijana (0% narzutu).
+
+2. Warstwa 4 (Polimorficzne Klastry Fibonacciego K_1 + K_2 z Regułą Zera — Koperta Klucza):
+   - Bazowe tablice przed permutacją S-Boxa:
+     F_K1 = [0, 1, 2, 3, 5, 8, 13, 21, 34, 55]               (indeksy 0..9)
+     F_K2 = [0, 89, 144, 233, 377, 610, 987, 1597, 2584, 4181] (indeksy 0..9)
+   - Równanie pojedynczego klastra dla czwórki indeksów (c1, c2, c3, c4) w 0..9:
+     * Dla K_1: V(K_1) = F_K1[c1] * F_K1[c2] * F_K1[c3] + F_K1[c4]
+     * Dla K_2 (Reguła Zera): M(c) = (c === 0 ? 1 : F_K2[c]), V(K_2) = M(c1)*M(c2)*M(c3) + F_K2[c4]
+   - Złożenie pary klastrów z przesunięciem ciągłości F_11 = 89: Bajt = V(K_1) + V(K_2) - 89 w czasie O(1).
+   - Dlaczego plik nie puchnie do 2.4 MB? Bo klastry K_1+K_2 kodują wyłącznie 88-bajtowy
+     nagłówek kryptograficzny (do 352 bajtów w [16..367]), w którym ukryty jest 256-bitowy
+     klucz sesyjny AES-256-GCM, 96-bitowy wektor IV oraz 240-bitowy tag SHA-256!
+
+3. Warstwa 3 (Sprzętowe Szyfrowanie Wsadu AES-256-GCM + Nieliniowy S-Box/LFG):
+   - Główny skompresowany strumień (~707 KB w [368..EOF]) jest zaszyfrowany sprzętowo
+     algorytmem AES-256-GCM (`crypto.subtle.decrypt` / `AES/GCM/NoPadding` / `Aes256Gcm`)
+     z narzutem zaledwie 16 bajtów (128-bitowy tag autoryzacji GHASH)!
+   - Dodatkowo pierwsze 256 bajtów strumienia Gzip przed wejściem do AES-256-GCM jest
+     przemielone przez LFG S_n=(S_{n-24}+S_{n-55}) mod 2^32 oraz nieliniowy S-Box K_1/K_2,
+     co niszczy statyczny nagłówek Gzip (0x1F 0x8B 0x08).
+
+4. Warstwa 2 i 1 (Zero-document.write, Odwołany Blob URL, Higiena RAM .fill(0) i Anti-Tamper):
+   - Zamiast `document.write(html)` (podatnego na hook Fridy i zostawiającego kod w `outerHTML`),
+     loader wycina sekcję binarną JS prosto z `Uint8Array`, tworzy jednorazowy `Blob`,
+     natychmiast zeruje bufor w pamięci RAM (`_bufB.fill(0)`), a po wykonaniu skryptu
+     wywołuje `URL.revokeObjectURL()` i usuwa znacznik `<script>` z drzewa DOM (`outerHTML` jest czysty!).
+   - Bezrozgałęzieniowe zatruwanie klucza (Branchless Key Poisoning): wykrycie hooka Fridy,
+     flagi `WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS=--remote-debugging-port` lub podmiany
+     `steam_api64.dll` (Goldberg Emu) modyfikuje bajt klucza operacją XOR (brak instrukcji `if`,
+     którą cracker mógłby załatać przez NOP w x64dbg/Ghidra).
+
+--------------------------------------------------------------------------------
+CZĘŚĆ 3. SŁOWNIK MODUŁÓW SILNIKA PODZIELONY WEDŁUG KATEGORII ARCHITEKTONICZNYCH
+--------------------------------------------------------------------------------
+
+### [GPU & RENDER] (7 modułów)
+  * ChemGPU                      <-> _q0x01a_cssBoxSizing         : Silnik WebGL2 WARL (rozmycie pola energii i mapowanie tonów sRGB na GPU z automatycznym fallbackiem CPU)
+  * ChemSuper                    <-> _q0x02b_domScrollSnap        : Główny akcelerator pakietów fotonowych i promieni WebGL2 (tryby PC 128 źródeł / Extreme 512 źródeł, odbicia i refrakcja)
+  * ChemGraphics                 <-> _q0x03c_svgViewBoxFit        : Menedżer profili graficznych, skalowania rozdzielczości, limitów klatek i budżetu cieniowania
+  * ChemFXAnim                   <-> _q0x04d_cssKeyframeLerp      : System animacji cząsteczkowych, rozbłysków reakcji, smug pocisków i efektów trafień
+  * ChemAnimationPolicy          <-> _q0x05e_ariaMotionPref       : Polityka płynności animacji, redukcji ruchu i adaptacji klatek pod urządzenia mobilne i PC
+  * ChemAtlasEffects             <-> _q0x06f_glyphSubpixelAa      : Efekty wizualne atlasu pierwiastków, poświaty izotopów i wizualizacje orbitali
+  * ChemVerifiedEffects          <-> _q0x07a_rectClipBounds       : Walidator poprawności efektów specjalnych i stanów wizualnych po reakcjach chemicznych
+
+### [WALKA I FIZYKA] (22 modułów)
+  * ChemCombat                   <-> _q0x10a_domAriaLayout        : Główna pętla walki, obrażeń, kolizji pocisków, i-frame'ów oraz idealnego uniku (złote goko/pierd przy idealnym uniku)
+  * ChemCombatFlow               <-> _q0x11b_flexRowGutter        : Sterownik tempa starć, fal przeciwników, przejść między pokojami i dynamiki agresji
+  * ChemCombatPolish             <-> _q0x12c_textEllipsisWrap     : Dopracowanie odczuć walki (hit-stop, odrzut, złota poświata idealnego uniku, feedback trafień)
+  * ChemCombatTrailer            <-> _q0x13d_mediaAspectCrop      : Sekwencje pokazowe i dynamiczne kamery/efekty w kulminacyjnych momentach starć
+  * ChemWeapons                  <-> _q0x14e_fontGlyphKern        : Arsenał broni chemicznych, statystyki strzałów, zużycie amunicji/energii i modyfikatory żywiołów
+  * ChemWeaponChoice             <-> _q0x15f_selectOptionNode     : Interfejs i logika wyboru oraz przełączania broni przed i w trakcie runu
+  * ChemUpgrades                 <-> _q0x16a_svgStrokeDash        : Drzewko ulepszeń za protony, elektrony i neutrony oraz skalowanie statystyk gracza
+  * ChemRevive                   <-> _q0x17b_cssFlexMargin        : System wykupienia powrotu do życia za protony (skalowany zależnie od piętra i liczby wcześniejszych wskrzeszeń w runie)
+  * ChemBossRush                 <-> _q0x18c_bezierTangentLut     : Tryb Boss Rush (odblokowywany po przejściu do 3. piętra, kolejne areny bossów i nagrody)
+  * ChemBossDeaths               <-> _q0x19d_canvasPathArc        : Sekwencje śmierci bossów, eksplozje rdzeni i wypłaty elektronów/neutronów (1 / 5 / 10 / 20 / 40 za kolejnych bossów)
+  * ChemEnemyDeaths              <-> _q0x1ae_borderRadiusPx       : Logika pokonania zwykłych wrogów, dropów materii i rozpadu cząsteczkowego
+  * ChemEnemyNav                 <-> _q0x1bf_gridAutoColumns      : Sztuczna inteligencja poruszania się wrogów, omijania przeszkód i okrążania gracza
+  * ChemEnemyWarnings            <-> _q0x1c0_outlineOffsetEm      : Wskaźniki ostrzegawcze o nadchodzących atakach spoza ekranu i szarżach wrogów
+  * ChemAttackTelegraphs         <-> _q0x1d1_caretColorStyle      : Telegrafowanie obszarów rażenia bossów i wrogów (strefy niebezpieczeństwa na podłodze)
+  * ChemHostileTrace             <-> _q0x1e2_pointerEventsNone    : Śledzenie trajektorii wrogich pocisków i promieni zagrożenia
+  * ChemCatDeaths                <-> _q0x1f3_userSelectNone       : Obsługa utraty życia przez kota gracza i animacja ratunkowa/upadku
+  * ChemAuxDeaths                <-> _q0x204_listStyleType        : Obsługa zniszczenia obiektów pomocniczych, dronów, wieżyczek i pułapek
+  * ChemDeathBurst               <-> _q0x215_boxShadowSpread      : Fala uderzeniowa i rozrzut cząstek przy śmierci jednostek
+  * ChemDeathFX                  <-> _q0x226_filterSepiaTone      : Efekty wizualne ekranu śmierci i spowolnienia czasu (slow-motion)
+  * ChemDeathPanel               <-> _q0x237_dialogBackdrop       : Ekran podsumowania po zgonie (opcja wskrzeszenia za protony lub powrót do bazy)
+  * ChemDeathPolicy              <-> _q0x248_overflowClipBox      : Reguły zachowania ekwipunku, walut i postępu po śmierci gracza
+  * ChemDeathReview              <-> _q0x259_tableCellAlign       : Analiza przyczyny zgonu (co zadało ostatnie obrażenia i raport obrażeń)
+
+### [CHEMIA I FIZYKA MATERII] (22 modułów)
+  * ChemPeriodic                 <-> _q0x30a_fontVariantNum       : Układ okresowy pierwiastków, właściwości atomowe, masy (w tym ciekawostka 1836 m_p/m_e) i konfiguracje
+  * ChemPeriodicSymbols          <-> _q0x31b_unicodeBidiIso       : Symbole, kolory i oznaczenia pierwiastków chemicznych w UI oraz świecie gry
+  * ChemMatter                   <-> _q0x32c_marginCollapse       : Rdzeń symulacji materii, gęstości, stanów skupienia i interakcji substancji
+  * ChemMatterVisual             <-> _q0x33d_backgroundClip       : Renderowanie cieczy, gazów, osadów i kryształów na planszy
+  * ChemMaterialState            <-> _q0x34e_borderCollapse       : Przejścia fazowe materiałów (topnienie, parowanie, sublimacja, krzepnięcie)
+  * ChemPhase                    <-> _q0x35f_zIndexStacking       : Zarządzanie fazami fizycznymi i stanami reaktywności w pokojach
+  * ChemWallMatter               <-> _q0x36a_paddingInline        : Właściwości materiałowe ścian (przewodnictwo, odbijanie światła, korozja kwasowa, niszczenie)
+  * ChemThermalState             <-> _q0x37b_colorSchemeDark      : Symulacja temperatury, przewodnictwa cieplnego, zapłonu i wychłodzenia
+  * ChemReactionTrace            <-> _q0x38c_textIndentCalc       : Rejestrator przebiegu reakcji chemicznych i bilansu energetycznego
+  * ChemReactionPlum             <-> _q0x39d_radialGradStop       : Chmury oparów, dymu i toksycznych wyziewów powstających w wyniku reakcji
+  * ChemBondMotion               <-> _q0x3ae_cubicBezierPts       : Dynamika drgań wiązań chemicznych i sprężystości cząsteczek
+  * ChemBondStructures           <-> _q0x3bf_svgPolygonPts        : Topologia wiązań kowalencyjnych, jonowych i metalicznych
+  * ChemLab                      <-> _q0x3c0_gridTemplateArea     : Laboratorium chemiczne gracza (syntetyzowanie związków, badania i testy)
+  * ChemElectric                 <-> _q0x3d1_flexBasisAuto        : Symulacja prądu elektrycznego, napięcia, łuków elektrycznych i elektrolizy
+  * ChemElectricFX               <-> _q0x3e2_strokeMiterLim       : Renderowanie wyładowań, błyskawic i spięć na przewodnikach
+  * ChemElectricHooks            <-> _q0x3f3_eventTargetBind      : Wyzwalacze środowiskowe reagujące na przepływ prądu (otwieranie bramek, cewki)
+  * ChemElectricChoice           <-> _q0x404_radioGroupCheck      : Wybór modyfikatorów i obwodów elektrycznych w trakcie rozgrywki
+  * ChemConductionRoom           <-> _q0x415_columnGapRule        : Specjalne pokoje zagadek i walk opartych na przewodnictwie elektrycznym i cieczach
+  * ChemEnergyIsotope            <-> _q0x426_fontStretchCond      : Mechanika rozpadu promieniotwórczego izotopów i emisji energii
+  * ChemEnergyPressure           <-> _q0x437_lineHeightNorm       : Mechanika ciśnienia gazów, fali uderzeniowej i dekompresji
+  * ChemEnergyVoltage            <-> _q0x448_letterSpacingEm      : Mechanika potencjału elektrochemicznego i ogniw galwanicznych
+  * ChemHydrogenShadow           <-> _q0x459_dropShadowBlur       : Specjalny stan kwantowego cienia wodorowego / tunelowania
+
+### [ŚWIAT, BIOMY I KSIĘGA] (27 modułów)
+  * ChemBiomes                   <-> _q0x50a_mediaQueryMatch      : Definicje biomów, palet kolorystycznych, zagrożeń środowiskowych i pięter
+  * ChemRoomShapes               <-> _q0x51b_aspectRatioBox       : Generator geometrii pokoi, korytarzy, filarów i przeszkód
+  * ChemRoomGates                <-> _q0x52c_borderImageSlice     : Logika drzwi, śluz między pokojami, blokad na czas walki i przejść na kolejne piętro
+  * ChemBestiary                 <-> _q0x53d_captionSideTop       : Bestiariusz wrogów i bossów wraz ze statystykami, odpornościami i opisami
+  * ChemKnowledge                <-> _q0x54e_counterResetIdx      : Baza wiedzy chemicznej, odkrytych reakcji i ciekawostek naukowych
+  * ChemKnowledgeCard            <-> _q0x55f_cardPaddingBox       : Komponent wizualny pojedynczej karty wiedzy/ciekawostki chemicznej
+  * ChemBook                     <-> _q0x56a_bookSpineLayout      : Główny interfejs Księgi Alchemii / Chemii (encyklopedia przepisów i związków)
+  * ChemBookCategory             <-> _q0x57b_tabNavHeader         : Kategorie działów w Księdze Chemii
+  * ChemBookSubcategory          <-> _q0x58c_subTabItemNode       : Podkategorie związków chemicznych w Księdze
+  * ChemBookComposition          <-> _q0x59d_spanInlineBlock      : Widok składu stechiometrycznego cząsteczek w Księdze
+  * ChemBookStructure            <-> _q0x5ae_svgLineCapRound      : Rysowanie wzorów strukturalnych cząsteczek w Księdze
+  * ChemBookEl                   <-> _q0x5bf_domNodeWrapper       : Kontener DOM elementów Księgi Chemii
+  * ChemBookInstallStyle         <-> _q0x5c0_styleSheetMount      : Dynamiczne arkusze stylów dla Księgi Chemii
+  * ChemBookMark                 <-> _q0x5d1_anchorBookmark       : Zakładki w Księdze Chemii do szybkiego przełączania stron
+  * ChemBookNonmetals            <-> _q0x5e2_gridCellSpan         : Sekcja niemetali i ich reaktywności w Księdze
+  * ChemBookShelves              <-> _q0x5f3_flexWrapShelf        : Widok półek z odczynnikami w Księdze
+  * ChemBookSodiumWaterRecipes   <-> _q0x604_tableRowStripe       : Specjalne receptury reakcji metali alkalicznych (np. sód + woda -> eksplozja)
+  * ChemBookSpecial              <-> _q0x615_badgePillOffset      : Receptury specjalne i egzotyczne związki w Księdze
+  * ChemRecipeHints              <-> _q0x626_tooltipArrowPos      : System podpowiedzi do nieodkrytych jeszcze reakcji chemicznych
+  * ChemRecipeHintCard           <-> _q0x637_hintBoxShadow        : Karta podpowiedzi receptury w UI
+  * ChemRecipeIndex              <-> _q0x648_btreeIndexLut        : Indeks wyszukiwania wszystkich receptur chemicznych
+  * ChemRecipeStats              <-> _q0x659_statBarFillPct       : Statystyki użycia i siły poszczególnych receptur
+  * ChemRecentReactionCard       <-> _q0x66a_toastSlideIn         : Powiadomienie/karta ostatnio przeprowadzonej reakcji chemicznej
+  * ChemExtraCategories          <-> _q0x67b_navOverflowMenu      : Dodatkowe kategorie klasyfikacji obiektów i reakcji
+  * ChemV25Categories            <-> _q0x68c_legacyGridV25        : Rozszerzenia kategorii wprowadzone w wersji 25 silnika
+  * ChemV26Categories            <-> _q0x69d_legacyGridV26        : Rozszerzenia kategorii wprowadzone w wersji 26 silnika
+  * ChemLegacyReserveCandidates  <-> _q0x6ae_poolBufferAlloc      : Pula rezerwowych definicji i wariantów kompatybilności wstecznej
+
+### [WALKA, FIZYKA I REAKCJE] (1 modułów)
+  * ChemEnemyReactivity          <-> _q0x6bf_anisoRoughnessLut    : Silnik specyficznej reaktywności chemicznej 30 wrogów i bossów na poszczególne atomy układu okresowego oraz związki chemiczne (Popcorn, Klatrat Skrobia-Jod, Przejście Szkliste Tg, Szok pH, Denaturacja Białek, Przewodnictwo Segmentowe, EMP Fiskalne)
+
+### [AUDIO I MUZYKA PROCEDURALNA] (16 modułów)
+  * ChemMusicPlayback            <-> _q0x70a_audioCtxGain         : Główny odtwarzacz i syntezator Web Audio API generujący muzykę w czasie rzeczywistym (0 MB plików MP3)
+  * ChemMusicStats               <-> _q0x71b_fftSpectrumBin       : Telemetria odtwarzania muzyki, analizator widma i ranking utworów
+  * ChemMusicTransitions         <-> _q0x72c_crossfadeCurve       : Płynne przejścia (crossfade) między muzyką eksploracji, walki i bossów
+  * ChemBiomeMusic               <-> _q0x73d_oscDetuneCent        : Proceduralne ścieżki dźwiękowe przypisane do poszczególnych biomów
+  * ChemNeonMusic                <-> _q0x74e_sawtoothWaveLut      : Syntezator utworów synthwave/neon (NeonDance, LabRave, ElectronDawn)
+  * ChemHeartMusic               <-> _q0x75f_pulseWidthMod        : Silnik muzyczny utworu Heart Reactor i motywów rdzenia
+  * ChemAnthemMusic              <-> _q0x76a_chorusDelayTap       : Generator hymnu głównego i motywów przewodnich gry
+  * ChemGuitarVoice              <-> _q0x77b_karplusStrong        : Fizyczny model syntezy przesterowanej gitary elektrycznej i riffów metalowych
+  * ChemGuitarSong               <-> _q0x78c_riffSequencer        : Sekwencer bojowych utworów gitarowych i metalowych
+  * ChemOriginalTrack            <-> _q0x79d_masterBusComp        : Odtwarzacz klasycznych/oryginalnych aranżacji ścieżki dźwiękowej
+  * ChemTrackCatalog             <-> _q0x7ae_playlistIndex        : Pełny katalog ścieżek dźwiękowych dostępnych w grze i odtwarzaczu
+  * ChemTrackStepLength          <-> _q0x7bf_tempoBpmTick         : Przelicznik długości kroków sekwencera względem BPM utworu
+  * ChemRadio                    <-> _q0x7c0_tunerDialKnob        : Wewnątrzgrowe radio pozwalające przełączać stacje i utwory podczas gry
+  * ChemAudioFX                  <-> _q0x7d1_biquadResonance      : Generator efektów dźwiękowych SFX (strzały, wybuchy, reakcje, interfejs)
+  * ChemAudioLevels              <-> _q0x7e2_decibelGainMap       : Mikser głośności (Master, Muzyka, SFX) i kompresja dynamiki
+  * initChemAudioPlayer          <-> _q0x7f3_mountMediaTray       : Inicjalizator mobilnego/desktopowego odtwarzacza Chemicats Music (tryb Spotify/YT Music + gra w tle z MediaSession)
+
+### [STEROWANIE I INTERFEJS] (9 modułów)
+  * ChemInputView                <-> _q0x80a_focusRingStyle       : Warstwa abstrakcji wejścia (automatyczne wykrywanie: dotyk / mysz+klawiatura / pad)
+  * ChemTouchControls            <-> _q0x81b_touchActionPan       : Wirtualne gałki (twin-stick) i przyciski dotykowe na ekranach mobilnych (Android/iOS)
+  * ChemTouchSettings            <-> _q0x82c_hitSlopRadius        : Konfiguracja rozmiaru, czułości i rozmieszczenia przycisków dotykowych
+  * ChemAim                      <-> _q0x83d_cursorCrosshair      : System celowania, wspomagania celowania (aim-assist) i wektorów strzału
+  * ChemAimControls              <-> _q0x84e_pointerLockDelta     : Ustawienia czułości celownika, martwych stref i trybu celowania
+  * ChemPad                      <-> _q0x85f_gamepadAxisMap       : Obsługa kontrolerów (Gamepad API: Xbox, DualSense, Steam Deck) i wibracji
+  * ChemPadHelp                  <-> _q0x86a_buttonGlyphSvg       : Podpowiedzi przypisania przycisków kontrolera na ekranie
+  * ChemWheel                    <-> _q0x87b_radialMenuArc        : Kołowe menu szybkiego wyboru broni i odczynników
+  * ChemPanelFocus               <-> _q0x88c_tabIndexOrder        : Zarządzanie fokusem nawigacji w oknach modalnych i menu
+
+### [ZAPIS, UI I SYSTEM] (29 modułów)
+  * ChemicatsSave                <-> _q0x90a_intlLocalePlural     : Główny menedżer zapisu stanu gry (waluty, odblokowania, postęp pięter, eksport/import sejwa)
+  * ChemAutoSave                 <-> _q0x91b_idleCallbackTick     : Automatyczny zapis postępu między pokojami i piętrami
+  * ChemSaveTools                <-> _q0x92c_jsonSchemaCheck      : Narzędzia migracji, naprawy i weryfikacji integralności plików zapisu
+  * ChemReadability              <-> _q0x93d_contrastRatioAa      : System czytelności i responsywnego skalowania UI na różnych urządzeniach (telefony, tablety, monitory 4K)
+  * ChemReadabilityPanel         <-> _q0x94e_fontSizeClamp        : Panel ustawień skali interfejsu, kontrastu tła i grubości czcionek
+  * ChemAccessibility            <-> _q0x95f_ariaDescribedBy      : Ułatwienia dostępu (tryby dla daltonistów, redukcja błysków, wzmocnienie konturów)
+  * ChemAccessibilityPanel       <-> _q0x96a_roleSwitchNode       : Menu konfiguracji ułatwień dostępu
+  * ChemI18n                     <-> _q0x97b_langTagBcp47         : System tłumaczeń dwujęzycznych (Polski / Angielski)
+  * ChemWelcome                  <-> _q0x98c_heroBannerFlex       : Ekran powitalny, samouczek wprowadzający i wybór początkowy
+  * ChemCharacterIdentity        <-> _q0x99d_avatarBadgeClip      : Dane postaci/kotów (statystyki bazowe, umiejętności pasywne, historia)
+  * ChemCharacterIdentityCard    <-> _q0x9ae_profileCardGrid      : Karta wyboru postaci w menu
+  * ChemEnding                   <-> _q0x9bf_creditsScrollY       : Logika zakończenia gry po pokonaniu ostatniego bossa (wypłata 40 waluty i finał)
+  * ChemEndingActors             <-> _q0x9c0_spriteStagePos       : Postacie i animacje występujące w scenie finałowej
+  * ChemEndingCSS                <-> _q0x9d1_epilogueStyle        : Arkusze stylów ekranu finałowego
+  * ChemEndingCopy               <-> _q0x9e2_epilogueTextBlock    : Teksty fabularne epilogu i podsumowania zwycięstwa
+  * ChemEndingEl                 <-> _q0x9f3_epilogueRootDom      : Główny kontener DOM sceny końcowej
+  * ChemEndingScene              <-> _q0xa04_cinemaLetterbox      : Reżyser sceny finałowej i efektów cząsteczkowych zakończenia
+  * ChemEndingScreen             <-> _q0xa15_modalOverlayEnd      : Ekran statystyk końcowych po ukończeniu gry
+  * ChemEndingUI                 <-> _q0xa26_summaryButtonRow     : Przyciski nawigacji po ukończeniu gry (Nowa Gra+, Boss Rush, Menu)
+  * ChemTrial                    <-> _q0xa37_timerBadgeTick       : System wyzwań czasowych i prób laboratoryjnych
+  * ChemSDK                      <-> _q0xa48_bridgePostMsg        : Most integracyjny SDK platform zewnętrznych (osiągnięcia, chmura, kontenery natywne)
+  * ChemicatsPrivacy             <-> _q0xa59_cookieConsentUi      : Polityka prywatności i lokalnego przetwarzania danych offline
+  * ChemicatsPrivacyBridge       <-> _q0xa6a_storageQuotaApi      : Most uprawnień pamięci lokalnej dla WebView / Capacitor
+  * ChemLAN                      <-> _q0xa7b_rtcPeerChannel       : Moduł sesji lokalnej / wymiany danych w sieci lokalnej
+  * ChemLANBanner                <-> _q0xa8c_statusPillTop        : Pasek informacyjny stanu połączenia LAN
+  * ChemLANPanel                 <-> _q0xa9d_peerListModal        : Panel konfiguracji połączenia lokalnego
+  * ChemLANSession               <-> _q0xaae_packetSyncLoop       : Synchronizacja stanu sesji LAN
+  * ChemLANSettings              <-> _q0xabf_netPortConfig        : Ustawienia protokołu lokalnego
+  * ChemRAMCachePanel            <-> _q0xad0_vramSlabForm         : Panel diagnostyki pamięci RAM, sekwencyjnej mikro-kalibracji i bufora grafik w ustawieniach
+
+### [SILNIK GRAFICZNY I RAYTRACING] (1 modułów)
+  * ChemRAMCache                 <-> _q0xacf_vramSlabPool         : Detektor pamięci RAM/CPU, sekwencyjny mikro-benchmark przeciążeniowy oraz bufor tekstur i grafik w pamięci RAM
+
+--------------------------------------------------------------------------------
+CZĘŚĆ 4. INDEKS ALFABETYCZNY: PRAWDZIWA NAZWA (Chem*) -> KOD ZMYŁKOWY (_q0x*)
+--------------------------------------------------------------------------------
+  ChemAccessibility              -> _q0x95f_ariaDescribedBy      (Ułatwienia dostępu (tryby dla daltonistów, redukcja błysków, wzmocnienie konturów))
+  ChemAccessibilityPanel         -> _q0x96a_roleSwitchNode       (Menu konfiguracji ułatwień dostępu)
+  ChemAim                        -> _q0x83d_cursorCrosshair      (System celowania, wspomagania celowania (aim-assist) i wektorów strzału)
+  ChemAimControls                -> _q0x84e_pointerLockDelta     (Ustawienia czułości celownika, martwych stref i trybu celowania)
+  ChemAnimationPolicy            -> _q0x05e_ariaMotionPref       (Polityka płynności animacji, redukcji ruchu i adaptacji klatek pod urządzenia mobilne i PC)
+  ChemAnthemMusic                -> _q0x76a_chorusDelayTap       (Generator hymnu głównego i motywów przewodnich gry)
+  ChemAtlasEffects               -> _q0x06f_glyphSubpixelAa      (Efekty wizualne atlasu pierwiastków, poświaty izotopów i wizualizacje orbitali)
+  ChemAttackTelegraphs           -> _q0x1d1_caretColorStyle      (Telegrafowanie obszarów rażenia bossów i wrogów (strefy niebezpieczeństwa na podłodze))
+  ChemAudioFX                    -> _q0x7d1_biquadResonance      (Generator efektów dźwiękowych SFX (strzały, wybuchy, reakcje, interfejs))
+  ChemAudioLevels                -> _q0x7e2_decibelGainMap       (Mikser głośności (Master, Muzyka, SFX) i kompresja dynamiki)
+  ChemAutoSave                   -> _q0x91b_idleCallbackTick     (Automatyczny zapis postępu między pokojami i piętrami)
+  ChemAuxDeaths                  -> _q0x204_listStyleType        (Obsługa zniszczenia obiektów pomocniczych, dronów, wieżyczek i pułapek)
+  ChemBestiary                   -> _q0x53d_captionSideTop       (Bestiariusz wrogów i bossów wraz ze statystykami, odpornościami i opisami)
+  ChemBiomeMusic                 -> _q0x73d_oscDetuneCent        (Proceduralne ścieżki dźwiękowe przypisane do poszczególnych biomów)
+  ChemBiomes                     -> _q0x50a_mediaQueryMatch      (Definicje biomów, palet kolorystycznych, zagrożeń środowiskowych i pięter)
+  ChemBondMotion                 -> _q0x3ae_cubicBezierPts       (Dynamika drgań wiązań chemicznych i sprężystości cząsteczek)
+  ChemBondStructures             -> _q0x3bf_svgPolygonPts        (Topologia wiązań kowalencyjnych, jonowych i metalicznych)
+  ChemBook                       -> _q0x56a_bookSpineLayout      (Główny interfejs Księgi Alchemii / Chemii (encyklopedia przepisów i związków))
+  ChemBookCategory               -> _q0x57b_tabNavHeader         (Kategorie działów w Księdze Chemii)
+  ChemBookComposition            -> _q0x59d_spanInlineBlock      (Widok składu stechiometrycznego cząsteczek w Księdze)
+  ChemBookEl                     -> _q0x5bf_domNodeWrapper       (Kontener DOM elementów Księgi Chemii)
+  ChemBookInstallStyle           -> _q0x5c0_styleSheetMount      (Dynamiczne arkusze stylów dla Księgi Chemii)
+  ChemBookMark                   -> _q0x5d1_anchorBookmark       (Zakładki w Księdze Chemii do szybkiego przełączania stron)
+  ChemBookNonmetals              -> _q0x5e2_gridCellSpan         (Sekcja niemetali i ich reaktywności w Księdze)
+  ChemBookShelves                -> _q0x5f3_flexWrapShelf        (Widok półek z odczynnikami w Księdze)
+  ChemBookSodiumWaterRecipes     -> _q0x604_tableRowStripe       (Specjalne receptury reakcji metali alkalicznych (np. sód + woda -> eksplozja))
+  ChemBookSpecial                -> _q0x615_badgePillOffset      (Receptury specjalne i egzotyczne związki w Księdze)
+  ChemBookStructure              -> _q0x5ae_svgLineCapRound      (Rysowanie wzorów strukturalnych cząsteczek w Księdze)
+  ChemBookSubcategory            -> _q0x58c_subTabItemNode       (Podkategorie związków chemicznych w Księdze)
+  ChemBossDeaths                 -> _q0x19d_canvasPathArc        (Sekwencje śmierci bossów, eksplozje rdzeni i wypłaty elektronów/neutronów (1 / 5 / 10 / 20 / 40 za kolejnych bossów))
+  ChemBossRush                   -> _q0x18c_bezierTangentLut     (Tryb Boss Rush (odblokowywany po przejściu do 3. piętra, kolejne areny bossów i nagrody))
+  ChemCatDeaths                  -> _q0x1f3_userSelectNone       (Obsługa utraty życia przez kota gracza i animacja ratunkowa/upadku)
+  ChemCharacterIdentity          -> _q0x99d_avatarBadgeClip      (Dane postaci/kotów (statystyki bazowe, umiejętności pasywne, historia))
+  ChemCharacterIdentityCard      -> _q0x9ae_profileCardGrid      (Karta wyboru postaci w menu)
+  ChemCombat                     -> _q0x10a_domAriaLayout        (Główna pętla walki, obrażeń, kolizji pocisków, i-frame'ów oraz idealnego uniku (złote goko/pierd przy idealnym uniku))
+  ChemCombatFlow                 -> _q0x11b_flexRowGutter        (Sterownik tempa starć, fal przeciwników, przejść między pokojami i dynamiki agresji)
+  ChemCombatPolish               -> _q0x12c_textEllipsisWrap     (Dopracowanie odczuć walki (hit-stop, odrzut, złota poświata idealnego uniku, feedback trafień))
+  ChemCombatTrailer              -> _q0x13d_mediaAspectCrop      (Sekwencje pokazowe i dynamiczne kamery/efekty w kulminacyjnych momentach starć)
+  ChemConductionRoom             -> _q0x415_columnGapRule        (Specjalne pokoje zagadek i walk opartych na przewodnictwie elektrycznym i cieczach)
+  ChemDeathBurst                 -> _q0x215_boxShadowSpread      (Fala uderzeniowa i rozrzut cząstek przy śmierci jednostek)
+  ChemDeathFX                    -> _q0x226_filterSepiaTone      (Efekty wizualne ekranu śmierci i spowolnienia czasu (slow-motion))
+  ChemDeathPanel                 -> _q0x237_dialogBackdrop       (Ekran podsumowania po zgonie (opcja wskrzeszenia za protony lub powrót do bazy))
+  ChemDeathPolicy                -> _q0x248_overflowClipBox      (Reguły zachowania ekwipunku, walut i postępu po śmierci gracza)
+  ChemDeathReview                -> _q0x259_tableCellAlign       (Analiza przyczyny zgonu (co zadało ostatnie obrażenia i raport obrażeń))
+  ChemElectric                   -> _q0x3d1_flexBasisAuto        (Symulacja prądu elektrycznego, napięcia, łuków elektrycznych i elektrolizy)
+  ChemElectricChoice             -> _q0x404_radioGroupCheck      (Wybór modyfikatorów i obwodów elektrycznych w trakcie rozgrywki)
+  ChemElectricFX                 -> _q0x3e2_strokeMiterLim       (Renderowanie wyładowań, błyskawic i spięć na przewodnikach)
+  ChemElectricHooks              -> _q0x3f3_eventTargetBind      (Wyzwalacze środowiskowe reagujące na przepływ prądu (otwieranie bramek, cewki))
+  ChemEnding                     -> _q0x9bf_creditsScrollY       (Logika zakończenia gry po pokonaniu ostatniego bossa (wypłata 40 waluty i finał))
+  ChemEndingActors               -> _q0x9c0_spriteStagePos       (Postacie i animacje występujące w scenie finałowej)
+  ChemEndingCopy                 -> _q0x9e2_epilogueTextBlock    (Teksty fabularne epilogu i podsumowania zwycięstwa)
+  ChemEndingCSS                  -> _q0x9d1_epilogueStyle        (Arkusze stylów ekranu finałowego)
+  ChemEndingEl                   -> _q0x9f3_epilogueRootDom      (Główny kontener DOM sceny końcowej)
+  ChemEndingScene                -> _q0xa04_cinemaLetterbox      (Reżyser sceny finałowej i efektów cząsteczkowych zakończenia)
+  ChemEndingScreen               -> _q0xa15_modalOverlayEnd      (Ekran statystyk końcowych po ukończeniu gry)
+  ChemEndingUI                   -> _q0xa26_summaryButtonRow     (Przyciski nawigacji po ukończeniu gry (Nowa Gra+, Boss Rush, Menu))
+  ChemEnemyDeaths                -> _q0x1ae_borderRadiusPx       (Logika pokonania zwykłych wrogów, dropów materii i rozpadu cząsteczkowego)
+  ChemEnemyNav                   -> _q0x1bf_gridAutoColumns      (Sztuczna inteligencja poruszania się wrogów, omijania przeszkód i okrążania gracza)
+  ChemEnemyReactivity            -> _q0x6bf_anisoRoughnessLut    (Silnik specyficznej reaktywności chemicznej 30 wrogów i bossów na poszczególne atomy układu okresowego oraz związki chemiczne (Popcorn, Klatrat Skrobia-Jod, Przejście Szkliste Tg, Szok pH, Denaturacja Białek, Przewodnictwo Segmentowe, EMP Fiskalne))
+  ChemEnemyWarnings              -> _q0x1c0_outlineOffsetEm      (Wskaźniki ostrzegawcze o nadchodzących atakach spoza ekranu i szarżach wrogów)
+  ChemEnergyIsotope              -> _q0x426_fontStretchCond      (Mechanika rozpadu promieniotwórczego izotopów i emisji energii)
+  ChemEnergyPressure             -> _q0x437_lineHeightNorm       (Mechanika ciśnienia gazów, fali uderzeniowej i dekompresji)
+  ChemEnergyVoltage              -> _q0x448_letterSpacingEm      (Mechanika potencjału elektrochemicznego i ogniw galwanicznych)
+  ChemExtraCategories            -> _q0x67b_navOverflowMenu      (Dodatkowe kategorie klasyfikacji obiektów i reakcji)
+  ChemFXAnim                     -> _q0x04d_cssKeyframeLerp      (System animacji cząsteczkowych, rozbłysków reakcji, smug pocisków i efektów trafień)
+  ChemGPU                        -> _q0x01a_cssBoxSizing         (Silnik WebGL2 WARL (rozmycie pola energii i mapowanie tonów sRGB na GPU z automatycznym fallbackiem CPU))
+  ChemGraphics                   -> _q0x03c_svgViewBoxFit        (Menedżer profili graficznych, skalowania rozdzielczości, limitów klatek i budżetu cieniowania)
+  ChemGuitarSong                 -> _q0x78c_riffSequencer        (Sekwencer bojowych utworów gitarowych i metalowych)
+  ChemGuitarVoice                -> _q0x77b_karplusStrong        (Fizyczny model syntezy przesterowanej gitary elektrycznej i riffów metalowych)
+  ChemHeartMusic                 -> _q0x75f_pulseWidthMod        (Silnik muzyczny utworu Heart Reactor i motywów rdzenia)
+  ChemHostileTrace               -> _q0x1e2_pointerEventsNone    (Śledzenie trajektorii wrogich pocisków i promieni zagrożenia)
+  ChemHydrogenShadow             -> _q0x459_dropShadowBlur       (Specjalny stan kwantowego cienia wodorowego / tunelowania)
+  ChemI18n                       -> _q0x97b_langTagBcp47         (System tłumaczeń dwujęzycznych (Polski / Angielski))
+  ChemicatsPrivacy               -> _q0xa59_cookieConsentUi      (Polityka prywatności i lokalnego przetwarzania danych offline)
+  ChemicatsPrivacyBridge         -> _q0xa6a_storageQuotaApi      (Most uprawnień pamięci lokalnej dla WebView / Capacitor)
+  ChemicatsSave                  -> _q0x90a_intlLocalePlural     (Główny menedżer zapisu stanu gry (waluty, odblokowania, postęp pięter, eksport/import sejwa))
+  ChemInputView                  -> _q0x80a_focusRingStyle       (Warstwa abstrakcji wejścia (automatyczne wykrywanie: dotyk / mysz+klawiatura / pad))
+  ChemKnowledge                  -> _q0x54e_counterResetIdx      (Baza wiedzy chemicznej, odkrytych reakcji i ciekawostek naukowych)
+  ChemKnowledgeCard              -> _q0x55f_cardPaddingBox       (Komponent wizualny pojedynczej karty wiedzy/ciekawostki chemicznej)
+  ChemLab                        -> _q0x3c0_gridTemplateArea     (Laboratorium chemiczne gracza (syntetyzowanie związków, badania i testy))
+  ChemLAN                        -> _q0xa7b_rtcPeerChannel       (Moduł sesji lokalnej / wymiany danych w sieci lokalnej)
+  ChemLANBanner                  -> _q0xa8c_statusPillTop        (Pasek informacyjny stanu połączenia LAN)
+  ChemLANPanel                   -> _q0xa9d_peerListModal        (Panel konfiguracji połączenia lokalnego)
+  ChemLANSession                 -> _q0xaae_packetSyncLoop       (Synchronizacja stanu sesji LAN)
+  ChemLANSettings                -> _q0xabf_netPortConfig        (Ustawienia protokołu lokalnego)
+  ChemLegacyReserveCandidates    -> _q0x6ae_poolBufferAlloc      (Pula rezerwowych definicji i wariantów kompatybilności wstecznej)
+  ChemMaterialState              -> _q0x34e_borderCollapse       (Przejścia fazowe materiałów (topnienie, parowanie, sublimacja, krzepnięcie))
+  ChemMatter                     -> _q0x32c_marginCollapse       (Rdzeń symulacji materii, gęstości, stanów skupienia i interakcji substancji)
+  ChemMatterVisual               -> _q0x33d_backgroundClip       (Renderowanie cieczy, gazów, osadów i kryształów na planszy)
+  ChemMusicPlayback              -> _q0x70a_audioCtxGain         (Główny odtwarzacz i syntezator Web Audio API generujący muzykę w czasie rzeczywistym (0 MB plików MP3))
+  ChemMusicStats                 -> _q0x71b_fftSpectrumBin       (Telemetria odtwarzania muzyki, analizator widma i ranking utworów)
+  ChemMusicTransitions           -> _q0x72c_crossfadeCurve       (Płynne przejścia (crossfade) między muzyką eksploracji, walki i bossów)
+  ChemNeonMusic                  -> _q0x74e_sawtoothWaveLut      (Syntezator utworów synthwave/neon (NeonDance, LabRave, ElectronDawn))
+  ChemOriginalTrack              -> _q0x79d_masterBusComp        (Odtwarzacz klasycznych/oryginalnych aranżacji ścieżki dźwiękowej)
+  ChemPad                        -> _q0x85f_gamepadAxisMap       (Obsługa kontrolerów (Gamepad API: Xbox, DualSense, Steam Deck) i wibracji)
+  ChemPadHelp                    -> _q0x86a_buttonGlyphSvg       (Podpowiedzi przypisania przycisków kontrolera na ekranie)
+  ChemPanelFocus                 -> _q0x88c_tabIndexOrder        (Zarządzanie fokusem nawigacji w oknach modalnych i menu)
+  ChemPeriodic                   -> _q0x30a_fontVariantNum       (Układ okresowy pierwiastków, właściwości atomowe, masy (w tym ciekawostka 1836 m_p/m_e) i konfiguracje)
+  ChemPeriodicSymbols            -> _q0x31b_unicodeBidiIso       (Symbole, kolory i oznaczenia pierwiastków chemicznych w UI oraz świecie gry)
+  ChemPhase                      -> _q0x35f_zIndexStacking       (Zarządzanie fazami fizycznymi i stanami reaktywności w pokojach)
+  ChemRadio                      -> _q0x7c0_tunerDialKnob        (Wewnątrzgrowe radio pozwalające przełączać stacje i utwory podczas gry)
+  ChemRAMCache                   -> _q0xacf_vramSlabPool         (Detektor pamięci RAM/CPU, sekwencyjny mikro-benchmark przeciążeniowy oraz bufor tekstur i grafik w pamięci RAM)
+  ChemRAMCachePanel              -> _q0xad0_vramSlabForm         (Panel diagnostyki pamięci RAM, sekwencyjnej mikro-kalibracji i bufora grafik w ustawieniach)
+  ChemReactionPlum               -> _q0x39d_radialGradStop       (Chmury oparów, dymu i toksycznych wyziewów powstających w wyniku reakcji)
+  ChemReactionTrace              -> _q0x38c_textIndentCalc       (Rejestrator przebiegu reakcji chemicznych i bilansu energetycznego)
+  ChemReadability                -> _q0x93d_contrastRatioAa      (System czytelności i responsywnego skalowania UI na różnych urządzeniach (telefony, tablety, monitory 4K))
+  ChemReadabilityPanel           -> _q0x94e_fontSizeClamp        (Panel ustawień skali interfejsu, kontrastu tła i grubości czcionek)
+  ChemRecentReactionCard         -> _q0x66a_toastSlideIn         (Powiadomienie/karta ostatnio przeprowadzonej reakcji chemicznej)
+  ChemRecipeHintCard             -> _q0x637_hintBoxShadow        (Karta podpowiedzi receptury w UI)
+  ChemRecipeHints                -> _q0x626_tooltipArrowPos      (System podpowiedzi do nieodkrytych jeszcze reakcji chemicznych)
+  ChemRecipeIndex                -> _q0x648_btreeIndexLut        (Indeks wyszukiwania wszystkich receptur chemicznych)
+  ChemRecipeStats                -> _q0x659_statBarFillPct       (Statystyki użycia i siły poszczególnych receptur)
+  ChemRevive                     -> _q0x17b_cssFlexMargin        (System wykupienia powrotu do życia za protony (skalowany zależnie od piętra i liczby wcześniejszych wskrzeszeń w runie))
+  ChemRoomGates                  -> _q0x52c_borderImageSlice     (Logika drzwi, śluz między pokojami, blokad na czas walki i przejść na kolejne piętro)
+  ChemRoomShapes                 -> _q0x51b_aspectRatioBox       (Generator geometrii pokoi, korytarzy, filarów i przeszkód)
+  ChemSaveTools                  -> _q0x92c_jsonSchemaCheck      (Narzędzia migracji, naprawy i weryfikacji integralności plików zapisu)
+  ChemSDK                        -> _q0xa48_bridgePostMsg        (Most integracyjny SDK platform zewnętrznych (osiągnięcia, chmura, kontenery natywne))
+  ChemSuper                      -> _q0x02b_domScrollSnap        (Główny akcelerator pakietów fotonowych i promieni WebGL2 (tryby PC 128 źródeł / Extreme 512 źródeł, odbicia i refrakcja))
+  ChemThermalState               -> _q0x37b_colorSchemeDark      (Symulacja temperatury, przewodnictwa cieplnego, zapłonu i wychłodzenia)
+  ChemTouchControls              -> _q0x81b_touchActionPan       (Wirtualne gałki (twin-stick) i przyciski dotykowe na ekranach mobilnych (Android/iOS))
+  ChemTouchSettings              -> _q0x82c_hitSlopRadius        (Konfiguracja rozmiaru, czułości i rozmieszczenia przycisków dotykowych)
+  ChemTrackCatalog               -> _q0x7ae_playlistIndex        (Pełny katalog ścieżek dźwiękowych dostępnych w grze i odtwarzaczu)
+  ChemTrackStepLength            -> _q0x7bf_tempoBpmTick         (Przelicznik długości kroków sekwencera względem BPM utworu)
+  ChemTrial                      -> _q0xa37_timerBadgeTick       (System wyzwań czasowych i prób laboratoryjnych)
+  ChemUpgrades                   -> _q0x16a_svgStrokeDash        (Drzewko ulepszeń za protony, elektrony i neutrony oraz skalowanie statystyk gracza)
+  ChemV25Categories              -> _q0x68c_legacyGridV25        (Rozszerzenia kategorii wprowadzone w wersji 25 silnika)
+  ChemV26Categories              -> _q0x69d_legacyGridV26        (Rozszerzenia kategorii wprowadzone w wersji 26 silnika)
+  ChemVerifiedEffects            -> _q0x07a_rectClipBounds       (Walidator poprawności efektów specjalnych i stanów wizualnych po reakcjach chemicznych)
+  ChemWallMatter                 -> _q0x36a_paddingInline        (Właściwości materiałowe ścian (przewodnictwo, odbijanie światła, korozja kwasowa, niszczenie))
+  ChemWeaponChoice               -> _q0x15f_selectOptionNode     (Interfejs i logika wyboru oraz przełączania broni przed i w trakcie runu)
+  ChemWeapons                    -> _q0x14e_fontGlyphKern        (Arsenał broni chemicznych, statystyki strzałów, zużycie amunicji/energii i modyfikatory żywiołów)
+  ChemWelcome                    -> _q0x98c_heroBannerFlex       (Ekran powitalny, samouczek wprowadzający i wybór początkowy)
+  ChemWheel                      -> _q0x87b_radialMenuArc        (Kołowe menu szybkiego wyboru broni i odczynników)
+  initChemAudioPlayer            -> _q0x7f3_mountMediaTray       (Inicjalizator mobilnego/desktopowego odtwarzacza Chemicats Music (tryb Spotify/YT Music + gra w tle z MediaSession))
+
+--------------------------------------------------------------------------------
+CZĘŚĆ 5. INDEKS ODWROTNY: KOD ZMYŁKOWY (_q0x*) -> PRAWDZIWA NAZWA (Chem*)
+--------------------------------------------------------------------------------
+  _q0x01a_cssBoxSizing         -> ChemGPU                        (Silnik WebGL2 WARL (rozmycie pola energii i mapowanie tonów sRGB na GPU z automatycznym fallbackiem CPU))
+  _q0x02b_domScrollSnap        -> ChemSuper                      (Główny akcelerator pakietów fotonowych i promieni WebGL2 (tryby PC 128 źródeł / Extreme 512 źródeł, odbicia i refrakcja))
+  _q0x03c_svgViewBoxFit        -> ChemGraphics                   (Menedżer profili graficznych, skalowania rozdzielczości, limitów klatek i budżetu cieniowania)
+  _q0x04d_cssKeyframeLerp      -> ChemFXAnim                     (System animacji cząsteczkowych, rozbłysków reakcji, smug pocisków i efektów trafień)
+  _q0x05e_ariaMotionPref       -> ChemAnimationPolicy            (Polityka płynności animacji, redukcji ruchu i adaptacji klatek pod urządzenia mobilne i PC)
+  _q0x06f_glyphSubpixelAa      -> ChemAtlasEffects               (Efekty wizualne atlasu pierwiastków, poświaty izotopów i wizualizacje orbitali)
+  _q0x07a_rectClipBounds       -> ChemVerifiedEffects            (Walidator poprawności efektów specjalnych i stanów wizualnych po reakcjach chemicznych)
+  _q0x10a_domAriaLayout        -> ChemCombat                     (Główna pętla walki, obrażeń, kolizji pocisków, i-frame'ów oraz idealnego uniku (złote goko/pierd przy idealnym uniku))
+  _q0x11b_flexRowGutter        -> ChemCombatFlow                 (Sterownik tempa starć, fal przeciwników, przejść między pokojami i dynamiki agresji)
+  _q0x12c_textEllipsisWrap     -> ChemCombatPolish               (Dopracowanie odczuć walki (hit-stop, odrzut, złota poświata idealnego uniku, feedback trafień))
+  _q0x13d_mediaAspectCrop      -> ChemCombatTrailer              (Sekwencje pokazowe i dynamiczne kamery/efekty w kulminacyjnych momentach starć)
+  _q0x14e_fontGlyphKern        -> ChemWeapons                    (Arsenał broni chemicznych, statystyki strzałów, zużycie amunicji/energii i modyfikatory żywiołów)
+  _q0x15f_selectOptionNode     -> ChemWeaponChoice               (Interfejs i logika wyboru oraz przełączania broni przed i w trakcie runu)
+  _q0x16a_svgStrokeDash        -> ChemUpgrades                   (Drzewko ulepszeń za protony, elektrony i neutrony oraz skalowanie statystyk gracza)
+  _q0x17b_cssFlexMargin        -> ChemRevive                     (System wykupienia powrotu do życia za protony (skalowany zależnie od piętra i liczby wcześniejszych wskrzeszeń w runie))
+  _q0x18c_bezierTangentLut     -> ChemBossRush                   (Tryb Boss Rush (odblokowywany po przejściu do 3. piętra, kolejne areny bossów i nagrody))
+  _q0x19d_canvasPathArc        -> ChemBossDeaths                 (Sekwencje śmierci bossów, eksplozje rdzeni i wypłaty elektronów/neutronów (1 / 5 / 10 / 20 / 40 za kolejnych bossów))
+  _q0x1ae_borderRadiusPx       -> ChemEnemyDeaths                (Logika pokonania zwykłych wrogów, dropów materii i rozpadu cząsteczkowego)
+  _q0x1bf_gridAutoColumns      -> ChemEnemyNav                   (Sztuczna inteligencja poruszania się wrogów, omijania przeszkód i okrążania gracza)
+  _q0x1c0_outlineOffsetEm      -> ChemEnemyWarnings              (Wskaźniki ostrzegawcze o nadchodzących atakach spoza ekranu i szarżach wrogów)
+  _q0x1d1_caretColorStyle      -> ChemAttackTelegraphs           (Telegrafowanie obszarów rażenia bossów i wrogów (strefy niebezpieczeństwa na podłodze))
+  _q0x1e2_pointerEventsNone    -> ChemHostileTrace               (Śledzenie trajektorii wrogich pocisków i promieni zagrożenia)
+  _q0x1f3_userSelectNone       -> ChemCatDeaths                  (Obsługa utraty życia przez kota gracza i animacja ratunkowa/upadku)
+  _q0x204_listStyleType        -> ChemAuxDeaths                  (Obsługa zniszczenia obiektów pomocniczych, dronów, wieżyczek i pułapek)
+  _q0x215_boxShadowSpread      -> ChemDeathBurst                 (Fala uderzeniowa i rozrzut cząstek przy śmierci jednostek)
+  _q0x226_filterSepiaTone      -> ChemDeathFX                    (Efekty wizualne ekranu śmierci i spowolnienia czasu (slow-motion))
+  _q0x237_dialogBackdrop       -> ChemDeathPanel                 (Ekran podsumowania po zgonie (opcja wskrzeszenia za protony lub powrót do bazy))
+  _q0x248_overflowClipBox      -> ChemDeathPolicy                (Reguły zachowania ekwipunku, walut i postępu po śmierci gracza)
+  _q0x259_tableCellAlign       -> ChemDeathReview                (Analiza przyczyny zgonu (co zadało ostatnie obrażenia i raport obrażeń))
+  _q0x30a_fontVariantNum       -> ChemPeriodic                   (Układ okresowy pierwiastków, właściwości atomowe, masy (w tym ciekawostka 1836 m_p/m_e) i konfiguracje)
+  _q0x31b_unicodeBidiIso       -> ChemPeriodicSymbols            (Symbole, kolory i oznaczenia pierwiastków chemicznych w UI oraz świecie gry)
+  _q0x32c_marginCollapse       -> ChemMatter                     (Rdzeń symulacji materii, gęstości, stanów skupienia i interakcji substancji)
+  _q0x33d_backgroundClip       -> ChemMatterVisual               (Renderowanie cieczy, gazów, osadów i kryształów na planszy)
+  _q0x34e_borderCollapse       -> ChemMaterialState              (Przejścia fazowe materiałów (topnienie, parowanie, sublimacja, krzepnięcie))
+  _q0x35f_zIndexStacking       -> ChemPhase                      (Zarządzanie fazami fizycznymi i stanami reaktywności w pokojach)
+  _q0x36a_paddingInline        -> ChemWallMatter                 (Właściwości materiałowe ścian (przewodnictwo, odbijanie światła, korozja kwasowa, niszczenie))
+  _q0x37b_colorSchemeDark      -> ChemThermalState               (Symulacja temperatury, przewodnictwa cieplnego, zapłonu i wychłodzenia)
+  _q0x38c_textIndentCalc       -> ChemReactionTrace              (Rejestrator przebiegu reakcji chemicznych i bilansu energetycznego)
+  _q0x39d_radialGradStop       -> ChemReactionPlum               (Chmury oparów, dymu i toksycznych wyziewów powstających w wyniku reakcji)
+  _q0x3ae_cubicBezierPts       -> ChemBondMotion                 (Dynamika drgań wiązań chemicznych i sprężystości cząsteczek)
+  _q0x3bf_svgPolygonPts        -> ChemBondStructures             (Topologia wiązań kowalencyjnych, jonowych i metalicznych)
+  _q0x3c0_gridTemplateArea     -> ChemLab                        (Laboratorium chemiczne gracza (syntetyzowanie związków, badania i testy))
+  _q0x3d1_flexBasisAuto        -> ChemElectric                   (Symulacja prądu elektrycznego, napięcia, łuków elektrycznych i elektrolizy)
+  _q0x3e2_strokeMiterLim       -> ChemElectricFX                 (Renderowanie wyładowań, błyskawic i spięć na przewodnikach)
+  _q0x3f3_eventTargetBind      -> ChemElectricHooks              (Wyzwalacze środowiskowe reagujące na przepływ prądu (otwieranie bramek, cewki))
+  _q0x404_radioGroupCheck      -> ChemElectricChoice             (Wybór modyfikatorów i obwodów elektrycznych w trakcie rozgrywki)
+  _q0x415_columnGapRule        -> ChemConductionRoom             (Specjalne pokoje zagadek i walk opartych na przewodnictwie elektrycznym i cieczach)
+  _q0x426_fontStretchCond      -> ChemEnergyIsotope              (Mechanika rozpadu promieniotwórczego izotopów i emisji energii)
+  _q0x437_lineHeightNorm       -> ChemEnergyPressure             (Mechanika ciśnienia gazów, fali uderzeniowej i dekompresji)
+  _q0x448_letterSpacingEm      -> ChemEnergyVoltage              (Mechanika potencjału elektrochemicznego i ogniw galwanicznych)
+  _q0x459_dropShadowBlur       -> ChemHydrogenShadow             (Specjalny stan kwantowego cienia wodorowego / tunelowania)
+  _q0x50a_mediaQueryMatch      -> ChemBiomes                     (Definicje biomów, palet kolorystycznych, zagrożeń środowiskowych i pięter)
+  _q0x51b_aspectRatioBox       -> ChemRoomShapes                 (Generator geometrii pokoi, korytarzy, filarów i przeszkód)
+  _q0x52c_borderImageSlice     -> ChemRoomGates                  (Logika drzwi, śluz między pokojami, blokad na czas walki i przejść na kolejne piętro)
+  _q0x53d_captionSideTop       -> ChemBestiary                   (Bestiariusz wrogów i bossów wraz ze statystykami, odpornościami i opisami)
+  _q0x54e_counterResetIdx      -> ChemKnowledge                  (Baza wiedzy chemicznej, odkrytych reakcji i ciekawostek naukowych)
+  _q0x55f_cardPaddingBox       -> ChemKnowledgeCard              (Komponent wizualny pojedynczej karty wiedzy/ciekawostki chemicznej)
+  _q0x56a_bookSpineLayout      -> ChemBook                       (Główny interfejs Księgi Alchemii / Chemii (encyklopedia przepisów i związków))
+  _q0x57b_tabNavHeader         -> ChemBookCategory               (Kategorie działów w Księdze Chemii)
+  _q0x58c_subTabItemNode       -> ChemBookSubcategory            (Podkategorie związków chemicznych w Księdze)
+  _q0x59d_spanInlineBlock      -> ChemBookComposition            (Widok składu stechiometrycznego cząsteczek w Księdze)
+  _q0x5ae_svgLineCapRound      -> ChemBookStructure              (Rysowanie wzorów strukturalnych cząsteczek w Księdze)
+  _q0x5bf_domNodeWrapper       -> ChemBookEl                     (Kontener DOM elementów Księgi Chemii)
+  _q0x5c0_styleSheetMount      -> ChemBookInstallStyle           (Dynamiczne arkusze stylów dla Księgi Chemii)
+  _q0x5d1_anchorBookmark       -> ChemBookMark                   (Zakładki w Księdze Chemii do szybkiego przełączania stron)
+  _q0x5e2_gridCellSpan         -> ChemBookNonmetals              (Sekcja niemetali i ich reaktywności w Księdze)
+  _q0x5f3_flexWrapShelf        -> ChemBookShelves                (Widok półek z odczynnikami w Księdze)
+  _q0x604_tableRowStripe       -> ChemBookSodiumWaterRecipes     (Specjalne receptury reakcji metali alkalicznych (np. sód + woda -> eksplozja))
+  _q0x615_badgePillOffset      -> ChemBookSpecial                (Receptury specjalne i egzotyczne związki w Księdze)
+  _q0x626_tooltipArrowPos      -> ChemRecipeHints                (System podpowiedzi do nieodkrytych jeszcze reakcji chemicznych)
+  _q0x637_hintBoxShadow        -> ChemRecipeHintCard             (Karta podpowiedzi receptury w UI)
+  _q0x648_btreeIndexLut        -> ChemRecipeIndex                (Indeks wyszukiwania wszystkich receptur chemicznych)
+  _q0x659_statBarFillPct       -> ChemRecipeStats                (Statystyki użycia i siły poszczególnych receptur)
+  _q0x66a_toastSlideIn         -> ChemRecentReactionCard         (Powiadomienie/karta ostatnio przeprowadzonej reakcji chemicznej)
+  _q0x67b_navOverflowMenu      -> ChemExtraCategories            (Dodatkowe kategorie klasyfikacji obiektów i reakcji)
+  _q0x68c_legacyGridV25        -> ChemV25Categories              (Rozszerzenia kategorii wprowadzone w wersji 25 silnika)
+  _q0x69d_legacyGridV26        -> ChemV26Categories              (Rozszerzenia kategorii wprowadzone w wersji 26 silnika)
+  _q0x6ae_poolBufferAlloc      -> ChemLegacyReserveCandidates    (Pula rezerwowych definicji i wariantów kompatybilności wstecznej)
+  _q0x6bf_anisoRoughnessLut    -> ChemEnemyReactivity            (Silnik specyficznej reaktywności chemicznej 30 wrogów i bossów na poszczególne atomy układu okresowego oraz związki chemiczne (Popcorn, Klatrat Skrobia-Jod, Przejście Szkliste Tg, Szok pH, Denaturacja Białek, Przewodnictwo Segmentowe, EMP Fiskalne))
+  _q0x70a_audioCtxGain         -> ChemMusicPlayback              (Główny odtwarzacz i syntezator Web Audio API generujący muzykę w czasie rzeczywistym (0 MB plików MP3))
+  _q0x71b_fftSpectrumBin       -> ChemMusicStats                 (Telemetria odtwarzania muzyki, analizator widma i ranking utworów)
+  _q0x72c_crossfadeCurve       -> ChemMusicTransitions           (Płynne przejścia (crossfade) między muzyką eksploracji, walki i bossów)
+  _q0x73d_oscDetuneCent        -> ChemBiomeMusic                 (Proceduralne ścieżki dźwiękowe przypisane do poszczególnych biomów)
+  _q0x74e_sawtoothWaveLut      -> ChemNeonMusic                  (Syntezator utworów synthwave/neon (NeonDance, LabRave, ElectronDawn))
+  _q0x75f_pulseWidthMod        -> ChemHeartMusic                 (Silnik muzyczny utworu Heart Reactor i motywów rdzenia)
+  _q0x76a_chorusDelayTap       -> ChemAnthemMusic                (Generator hymnu głównego i motywów przewodnich gry)
+  _q0x77b_karplusStrong        -> ChemGuitarVoice                (Fizyczny model syntezy przesterowanej gitary elektrycznej i riffów metalowych)
+  _q0x78c_riffSequencer        -> ChemGuitarSong                 (Sekwencer bojowych utworów gitarowych i metalowych)
+  _q0x79d_masterBusComp        -> ChemOriginalTrack              (Odtwarzacz klasycznych/oryginalnych aranżacji ścieżki dźwiękowej)
+  _q0x7ae_playlistIndex        -> ChemTrackCatalog               (Pełny katalog ścieżek dźwiękowych dostępnych w grze i odtwarzaczu)
+  _q0x7bf_tempoBpmTick         -> ChemTrackStepLength            (Przelicznik długości kroków sekwencera względem BPM utworu)
+  _q0x7c0_tunerDialKnob        -> ChemRadio                      (Wewnątrzgrowe radio pozwalające przełączać stacje i utwory podczas gry)
+  _q0x7d1_biquadResonance      -> ChemAudioFX                    (Generator efektów dźwiękowych SFX (strzały, wybuchy, reakcje, interfejs))
+  _q0x7e2_decibelGainMap       -> ChemAudioLevels                (Mikser głośności (Master, Muzyka, SFX) i kompresja dynamiki)
+  _q0x7f3_mountMediaTray       -> initChemAudioPlayer            (Inicjalizator mobilnego/desktopowego odtwarzacza Chemicats Music (tryb Spotify/YT Music + gra w tle z MediaSession))
+  _q0x80a_focusRingStyle       -> ChemInputView                  (Warstwa abstrakcji wejścia (automatyczne wykrywanie: dotyk / mysz+klawiatura / pad))
+  _q0x81b_touchActionPan       -> ChemTouchControls              (Wirtualne gałki (twin-stick) i przyciski dotykowe na ekranach mobilnych (Android/iOS))
+  _q0x82c_hitSlopRadius        -> ChemTouchSettings              (Konfiguracja rozmiaru, czułości i rozmieszczenia przycisków dotykowych)
+  _q0x83d_cursorCrosshair      -> ChemAim                        (System celowania, wspomagania celowania (aim-assist) i wektorów strzału)
+  _q0x84e_pointerLockDelta     -> ChemAimControls                (Ustawienia czułości celownika, martwych stref i trybu celowania)
+  _q0x85f_gamepadAxisMap       -> ChemPad                        (Obsługa kontrolerów (Gamepad API: Xbox, DualSense, Steam Deck) i wibracji)
+  _q0x86a_buttonGlyphSvg       -> ChemPadHelp                    (Podpowiedzi przypisania przycisków kontrolera na ekranie)
+  _q0x87b_radialMenuArc        -> ChemWheel                      (Kołowe menu szybkiego wyboru broni i odczynników)
+  _q0x88c_tabIndexOrder        -> ChemPanelFocus                 (Zarządzanie fokusem nawigacji w oknach modalnych i menu)
+  _q0x90a_intlLocalePlural     -> ChemicatsSave                  (Główny menedżer zapisu stanu gry (waluty, odblokowania, postęp pięter, eksport/import sejwa))
+  _q0x91b_idleCallbackTick     -> ChemAutoSave                   (Automatyczny zapis postępu między pokojami i piętrami)
+  _q0x92c_jsonSchemaCheck      -> ChemSaveTools                  (Narzędzia migracji, naprawy i weryfikacji integralności plików zapisu)
+  _q0x93d_contrastRatioAa      -> ChemReadability                (System czytelności i responsywnego skalowania UI na różnych urządzeniach (telefony, tablety, monitory 4K))
+  _q0x94e_fontSizeClamp        -> ChemReadabilityPanel           (Panel ustawień skali interfejsu, kontrastu tła i grubości czcionek)
+  _q0x95f_ariaDescribedBy      -> ChemAccessibility              (Ułatwienia dostępu (tryby dla daltonistów, redukcja błysków, wzmocnienie konturów))
+  _q0x96a_roleSwitchNode       -> ChemAccessibilityPanel         (Menu konfiguracji ułatwień dostępu)
+  _q0x97b_langTagBcp47         -> ChemI18n                       (System tłumaczeń dwujęzycznych (Polski / Angielski))
+  _q0x98c_heroBannerFlex       -> ChemWelcome                    (Ekran powitalny, samouczek wprowadzający i wybór początkowy)
+  _q0x99d_avatarBadgeClip      -> ChemCharacterIdentity          (Dane postaci/kotów (statystyki bazowe, umiejętności pasywne, historia))
+  _q0x9ae_profileCardGrid      -> ChemCharacterIdentityCard      (Karta wyboru postaci w menu)
+  _q0x9bf_creditsScrollY       -> ChemEnding                     (Logika zakończenia gry po pokonaniu ostatniego bossa (wypłata 40 waluty i finał))
+  _q0x9c0_spriteStagePos       -> ChemEndingActors               (Postacie i animacje występujące w scenie finałowej)
+  _q0x9d1_epilogueStyle        -> ChemEndingCSS                  (Arkusze stylów ekranu finałowego)
+  _q0x9e2_epilogueTextBlock    -> ChemEndingCopy                 (Teksty fabularne epilogu i podsumowania zwycięstwa)
+  _q0x9f3_epilogueRootDom      -> ChemEndingEl                   (Główny kontener DOM sceny końcowej)
+  _q0xa04_cinemaLetterbox      -> ChemEndingScene                (Reżyser sceny finałowej i efektów cząsteczkowych zakończenia)
+  _q0xa15_modalOverlayEnd      -> ChemEndingScreen               (Ekran statystyk końcowych po ukończeniu gry)
+  _q0xa26_summaryButtonRow     -> ChemEndingUI                   (Przyciski nawigacji po ukończeniu gry (Nowa Gra+, Boss Rush, Menu))
+  _q0xa37_timerBadgeTick       -> ChemTrial                      (System wyzwań czasowych i prób laboratoryjnych)
+  _q0xa48_bridgePostMsg        -> ChemSDK                        (Most integracyjny SDK platform zewnętrznych (osiągnięcia, chmura, kontenery natywne))
+  _q0xa59_cookieConsentUi      -> ChemicatsPrivacy               (Polityka prywatności i lokalnego przetwarzania danych offline)
+  _q0xa6a_storageQuotaApi      -> ChemicatsPrivacyBridge         (Most uprawnień pamięci lokalnej dla WebView / Capacitor)
+  _q0xa7b_rtcPeerChannel       -> ChemLAN                        (Moduł sesji lokalnej / wymiany danych w sieci lokalnej)
+  _q0xa8c_statusPillTop        -> ChemLANBanner                  (Pasek informacyjny stanu połączenia LAN)
+  _q0xa9d_peerListModal        -> ChemLANPanel                   (Panel konfiguracji połączenia lokalnego)
+  _q0xaae_packetSyncLoop       -> ChemLANSession                 (Synchronizacja stanu sesji LAN)
+  _q0xabf_netPortConfig        -> ChemLANSettings                (Ustawienia protokołu lokalnego)
+  _q0xacf_vramSlabPool         -> ChemRAMCache                   (Detektor pamięci RAM/CPU, sekwencyjny mikro-benchmark przeciążeniowy oraz bufor tekstur i grafik w pamięci RAM)
+  _q0xad0_vramSlabForm         -> ChemRAMCachePanel              (Panel diagnostyki pamięci RAM, sekwencyjnej mikro-kalibracji i bufora grafik w ustawieniach)
+
+--------------------------------------------------------------------------------
+CZĘŚĆ 6. SZYBKIE KOMENDY TERMINALA (ODSZYFROWANIE / TŁUMACZENIE SYMBOLI)
+--------------------------------------------------------------------------------
+1. Sprawdzenie co oznacza dowolna zaszyfrowana nazwa (np. _q0xacf_vramSlabPool):
+   node -e 'import("./a6-rosetta.mjs").then(m => console.log(m.lookupRosettaCodeName("_q0xacf_vramSlabPool")))'
+
+2. Cofnięcie całego kamuflażu A6-ROSETTA w wycinku kodu lub pliku JS do czytelnych nazw Chem*:
+   node -e 'import("fs").then(fs => import("./a6-rosetta.mjs").then(m => console.log(m.reverseRosettaCamouflage(fs.readFileSync("plik.js","utf8")).text)))'
+
+3. Odszyfrowanie i weryfikacja binarnego kontenera `public/game.a6` w Node.js:
+   node -e 'import("fs").then(fs => import("./a6-crypt.mjs").then(m => { const d = m.decodeA6Container(fs.readFileSync("public/game.a6"), "CHEMICATS-STEAM-APPID-3184920-A6-SECRET"); console.log("OK! Rozmiar:", d.plaintext.length, "SHA256:", d.sourceSHA256); }))'
+
+4. Przebudowanie wszystkich paczek (.html + .a6) oraz automatyczna aktualizacja tego pliku .txt:
+   node pack-html.mjs
+================================================================================
