@@ -1,12 +1,12 @@
 ================================================================================
    CHEMICATS v30.9 — GŁÓWNY KLUCZ ODSZYFROWUJĄCY A6-CRYPT + SŁOWNIK A6-ROSETTA
 ================================================================================
-Ostatnia automatyczna aktualizacja : 2026-10-17T00:13:08.314Z
+Ostatnia automatyczna aktualizacja : 2026-10-17T05:19:38.161Z
 Zakamuflowane moduły silnika       : 134 modułów (1500 wystąpień w kodzie)
 Zakamuflowane symbole loadera      : 39 symboli kryptograficznych i DOM
-Build Web (chemicats-packed.html)  : 735.82 KB -> rozpakowuje się w RAM do 1.96 MB
-Build Steam (public/game.a6)       : 658.20 KB (0% narzutu Base96, SHA-256: 5338be6091833231a976efe81e51255d385494559b7c811c372637cd4d7f4ea6)
-Build Android (game-android.a6)    : 658.35 KB (wycięto 17 bindowań PC, SHA-256: 81755ef58bb6aca57cfe1c94f34b998f089146d7f57ef14cb3e805db4e6161ae)
+Build Web (chemicats-packed.html)  : 735.83 KB -> rozpakowuje się w RAM do 1.96 MB
+Build Steam (public/game.a6)       : 658.21 KB (0% narzutu Base96, SHA-256: 147b6405aaf4b434ede42f34824d971309da5828c80cba8e20347fffbe12d604)
+Build Android (game-android.a6)    : 658.36 KB (wycięto 17 bindowań PC, SHA-256: da956a3e79a2dde151a1b4756c4d881c846c61c6642013d34c577843ad33cdf2)
 UWAGA: Ten plik (.txt) leży wyłącznie lokalnie obok kodu źródłowego projektu.
        NIGDY nie jest pakowany do plików wynikowych .html ani .a6!
 ================================================================================
