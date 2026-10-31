@@ -111,7 +111,7 @@ function formatTime(sec: number): string {
 function createSilentWavDataUri(): string {
   const sampleRate = 8000;
   const numChannels = 1;
-  const bitsPerSample = 8;
+  const bitsPerSample = 16;
   const numSamples = sampleRate; // 1 second
   const blockAlign = (numChannels * bitsPerSample) >> 3;
   const byteRate = sampleRate * blockAlign;
@@ -137,10 +137,8 @@ function createSilentWavDataUri(): string {
   writeStr(36, 'data');
   view.setUint32(40, dataSize, true);
 
-  // 8-bit PCM silence is 128
+  // 16-bit signed PCM silence is all zeros (0 DC offset, zero loop click)
   const bytes = new Uint8Array(buffer);
-  bytes.fill(128, 44);
-
   let binary = '';
   for (let i = 0; i < bytes.byteLength; i++) {
     binary += String.fromCharCode(bytes[i]);
@@ -468,7 +466,7 @@ export function initChemAudioPlayer() {
       audio.configure({ enabled: true });
     }
     if (audio.settings.music <= 0.02) {
-      audio.configure({ music: 0.7 });
+      audio.configure({ music: 0.85, master: 0.88 });
     }
     await audio.playTrack(id, 'chem-music-player');
     audio.leavePanel?.();
@@ -983,7 +981,7 @@ export function initChemAudioPlayer() {
     const audio = getAudio();
     if (!audio) return;
     const v = Number(volInput.value);
-    audio.configure({ enabled: v > 0, music: v, master: Math.max(audio.settings.master || 0.72, v) });
+    audio.configure({ enabled: v > 0, music: v, master: Math.max(audio.settings.master || 0.88, v) });
   });
 
   searchInput.addEventListener('input', () => {
